@@ -5,3 +5,5 @@
 # Future build outputs
 /target/
 node_modules/
+# graphify output: derived, rebuilt by its post-commit hook (LD-33)
+graphify-out/
