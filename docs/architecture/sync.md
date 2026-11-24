@@ -1,19 +1,23 @@
 # REM — Messaging and synchronization contract
 
-**Owner:** Architecture (protocol) · **Status:** Specified (P0 r1, 2026-11-24). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Implements:** [PROJECT_SPEC §4.1](../../PROJECT_SPEC.md#41-messaging-and-synchronization-contract); IDs SYN-001..014 and DM-002 in [requirements.md](../product/requirements.md#sync-and-realtime-syn).
+**Owner:** Architecture (protocol) · **Status:** Specified (P0 r2, 2026-11-24, with the review resolutions of LD-14 in [decisions.md](../plan/decisions.md)). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Implements:** [PROJECT_SPEC §4.1](../../PROJECT_SPEC.md#41-messaging-and-synchronization-contract); IDs SYN-001..014 and DM-002 in [requirements.md](../product/requirements.md#sync-and-realtime-syn). **Wire names** (endpoints, events, fields, error codes) are defined in [contracts.md](contracts.md); this document owns their semantics.
 
 ## 1. Invariants (each becomes a property or integration test)
 
 | Inv | Statement | Test owner |
 |---|---|---|
-| I1 | A success ACK is returned only after the message, event, idempotency record and outbox row are committed in one transaction. | `rem-server-adapters::pg` fault-injection test |
-| I2 | `(actor_user_id, device_id, operation_id)` produces at most one effect. A replay returns the stored result. The same id with a different payload hash is `operation_conflict`. | property test + pg integration |
+| I1 | A success ACK is returned only after the command's effect, its event, its idempotency record and its outbox row are committed in one transaction. I1 depends on `synchronous_commit=on` for the application role (§3.1). | `rem-server-adapters::pg` fault-injection test; startup check of the setting |
+| I2 | `(actor_user_id, device_id, operation_id)` produces at most one effect, for every mutating command (§3.2). A replay returns only the stored original result. The same id with a different canonical command (kind, target or hash) is `operation_conflict`. | property test + pg integration |
 | I3 | Per conversation, event `seq` values are contiguous from 1 and unique. Aborted transactions do not consume a seq. | concurrent-writer property test (PT-02) |
-| I4 | A member reads only events with `seq` inside their membership intervals, subject to history visibility. Holding or guessing a cursor grants nothing. | negative authz suite |
+| I4 | A reader receives only events whose `seq` lies inside their visible ranges (§6.1). An event that references a message also needs that message's creation seq to be visible (§6.2). Holding or guessing a cursor grants nothing. | negative authz suite |
 | I5 | The client reducer is idempotent and deterministic: apply(e, apply(e, s)) = apply(e, s), and ordered replay from a snapshot converges. | `rem-client-core` property test (native and wasm32) |
-| I6 | A pending operation is durable on the device before it is shown, and removed only on ACK, on observing its own event, or on an explicit user discard. | client store integration (PT-01) |
-| I7 | Read position is a monotonic max per user × conversation. | property test |
-| I8 | Every client-visible ordering uses `seq`. Client wall clocks never order anything. | skewed-clock simulation |
+| I6 | A pending operation is durable on the device before it is shown, and removed only on ACK (including a stored result fetched by `operation_id`), on observing its own event, or on an explicit discard (by the user, or after a warning per *policy*, §5.4). | client store integration (PT-01) |
+| I7 | Read position is a monotonic max per user × conversation, clamped to the reader's highest visible seq. | property test |
+| I8 | Every client-visible ordering uses `seq`. Client wall clocks never order anything, and op age is measured in server time (§5.3). | skewed-clock simulation (±24 h) |
+| I9 | Per user, `user_seq` values are contiguous from 1 and unique (§3.1). | concurrent-writer property test |
+| I10 | Push reaches a session only for events whose `seq` lies inside the recipient's current membership interval, never after the session's revocation commits, and in `seq` order per conversation (§3.3). | `Fanout` and dispatcher integration |
+| I11 | Inside a visible range, a current member receives every `seq`, as a full event or a redacted stub, so gap detection always terminates (§4.1). | event-page property test |
+| I12 | An outbox is drained only under a session of its own `(instance, user_id, device_id)` (§5.4). | client store integration (PT-01) |
 
 ## 2. Identifiers
 
@@ -24,58 +28,136 @@
 ## 3. Server write path (durable ACK)
 
 1. The driving adapter authenticates the session and builds `Actor`, plus `operation_id`, and decodes the v1 DTO.
-2. The `SendMessage` use case validates the payload (size, entities, attachments) **before** opening the transaction.
-3. `ConversationLog::append` runs a single PostgreSQL transaction at READ COMMITTED with an explicit row lock:
-   1. `SELECT … FROM conversations WHERE id = $1 FOR UPDATE`. This serializes all writers of this conversation: sends, edits, deletes, and membership and permission changes.
-   2. Look up the idempotency record. If it exists with the same payload hash, return `Duplicate(stored_result)`; if the hash differs, return `Conflict`.
-   3. Check the actor's current membership and right (send, send_media…) and that their session is not revoked (as read in this transaction).
-   4. `UPDATE conversations SET last_seq = last_seq + 1 RETURNING last_seq`, which gives the gap-free seq (I3).
-   5. Insert the message, the event `(conversation_id, seq)`, the idempotency record, the outbox row, and the search-index row.
+2. The `SendMessage` use case validates the payload (size, entities, attachments) and builds the canonical command ([contracts.md §2.1](contracts.md#21-idempotent-mutations-and-operation-lookup)) **before** opening the transaction. The idempotency hash covers that canonical command, never the request bytes, so a retry that a newer client encodes differently still matches.
+3. `ConversationLog::append` runs a single PostgreSQL transaction at READ COMMITTED. The order of the steps decides which outcome wins when several apply:
+   1. **Session.** `SELECT … FROM sessions WHERE id = $1 FOR SHARE`. A revoked session returns `session_revoked`, even for a duplicate.
+   2. **Lock.** `SELECT … FROM conversations WHERE id = $1 FOR UPDATE`. This serializes all writers of this conversation: sends, edits, deletes, pins, and membership and permission changes.
+   3. **Idempotency.** Look up `(actor_user_id, device_id, operation_id)`. The same kind, target and hash return `Duplicate`, which carries only the stored original ACK fields and no new data, even if the actor's membership was removed since. A different kind, target or hash returns `Conflict` (`operation_conflict`), wherever the id was first used.
+   4. **Right.** For a new operation only, check the actor's current membership and right (send, send_media…).
+   5. **Write.** `UPDATE conversations SET last_seq = last_seq + 1 RETURNING last_seq`, which gives the gap-free seq (I3). Insert the message, the event `(conversation_id, seq)`, the idempotency record, the outbox row and the search-index row, plus any user events (§3.1).
    6. Commit.
 4. Only after the commit does the adapter reply `ack {operation_id, message_id, conversation_id, seq, server_time}`.
-5. The outbox dispatcher claims rows (`SKIP LOCKED`) and hands them to `Fanout` for connected, authorized sockets, then marks them dispatched. Delivery is at-least-once. A crash re-claims the rows.
+5. The outbox is dispatched in seq order per conversation (§3.3). Delivery is at-least-once, and a crash re-claims the work.
 
-**Serialization of revocation versus send:** removing a member takes the same conversation row lock and appends `member.removed` at some `seq = r`. Any send committed earlier has `seq < r`, so the removed member was authorized for it and may receive it. Any later send has `seq > r`, and I4 denies it. A **session** revocation commits in the identity tables. A command whose transaction started before that commit may still succeed, which is a documented race window that ends at commit. Commands after the commit fail, and `Fanout` closes the session's sockets once the revocation event is dispatched.
+**Serialization of revocation versus send:** removing a member takes the same conversation row lock and appends `member.removed` at some `seq = r`. Any send committed earlier has `seq < r`, so the removed member was authorized for it and may receive it. Any later send has `seq > r`, and I4 denies it. A retry of an earlier send after the removal is a duplicate and gets only its stored ACK. A **session** revocation updates the session row, so it waits for the share locks of that session's in-flight commands, and commands that reach step 1 later wait for it and then see the revocation. Each command therefore either commits before the revocation commits or returns `session_revoked`; no command of a revoked session commits after the revocation. `Fanout` stops pushing to the session at the revocation commit and closes its sockets (§3.3). Tests (PT-02, `pg` integration): a duplicate after a removal returns the stored ACK and nothing else; a send racing a revocation either commits first or gets `session_revoked`; a duplicate after the revocation gets `session_revoked`.
 
 **Throughput note:** the row lock limits each conversation to one writer at a time. That is intended for ordering. PT-02 measures sends per second per hot conversation on the reference hardware, and the group-size and slow-mode policy (GRP-010, P2) uses that number.
 
+### 3.1 Lock order, user sequence and retries
+
+- **`user_seq`.** Each user row holds `last_user_seq`. A transaction that writes a user event runs `UPDATE users SET last_user_seq = last_user_seq + 1 WHERE id = $1 RETURNING last_user_seq` in the same transaction, so the user stream is gap-free like the conversation stream (I9).
+- **Lock order.** Every transaction takes row locks in one global order: conversation rows in ascending id, then user rows in ascending id. The session check (§3 step 1) comes before both, and a revocation of several sessions locks them in ascending id. Examples: a forward from A to B locks both conversation rows in id order; group creation locks the new conversation, then the members' user rows ascending; a membership change locks the conversation, then the affected users' rows.
+- **Retries.** The server retries a transaction that fails with PostgreSQL `40P01` (deadlock) or `40001` (serialization failure) up to 3 times with jitter, then returns `unavailable`, which the client retries ([contracts.md §4](contracts.md#4-error-model)). PT-02 measures large-group membership transactions, which lock one user row per member.
+- **Durability.** The application role runs with `synchronous_commit=on`, set on the role and checked by the server at startup. I1 depends on it: with asynchronous commit an ACK could precede durability.
+
+### 3.2 Idempotency for every mutation
+
+Every mutating command listed in [contracts.md §2.1](contracts.md#21-idempotent-mutations-and-operation-lookup) follows the order of §3: session check, lock of the row that serializes it, idempotency lookup, right check, effect. Its idempotency record (kind, target, canonical hash, stored result) is written in the same transaction as the effect (I2).
+
+- **Serializing row.** The conversation row for conversation commands (including link redemption, which adds a member), the actor's user row for read position and prefs, the invite row for invite redemption, and the attachment row for finalize. Invite redemption runs before any session exists: it skips the session step and keys its record by the invite and `operation_id`.
+- **Commands that create their target** (create group, open DM, attachment create) have no row to lock. Two concurrent duplicates collide on the unique idempotency key: the loser's transaction rolls back on the unique violation and re-runs once, and the re-run finds the record. The same re-run settles one `operation_id` reused on two targets at once.
+- **Open DM.** A DM pair is unique per organization (index in [architecture.md §4](architecture.md#4-domain-model-sketch-validated-against-invariants-not-a-final-schema)). Opening an existing DM returns it. When both users open the same DM at once, they collide on that index, and the loser re-runs and returns the winner's conversation.
+- **Read position.** The server clamps the position to the reader's highest visible seq (§6.1) and keeps the maximum (I7). A coalescing worker writes `receipt.updated` for message authors at a *policy* rate, outside the read transaction, so a read locks only the reader's user row.
+
+### 3.3 Push path: ordered dispatch and fanout authorization
+
+- **Ordered dispatch.** Each conversation has a dispatch cursor row. A dispatcher claims cursor rows with `FOR UPDATE SKIP LOCKED`, reads that conversation's outbox rows after the cursor in seq order, hands them to `Fanout`, and advances the cursor in the same transaction. Seqs commit in order under the conversation lock, so the rows after the cursor have no holes. One dispatcher at a time owns a conversation, so its pushes leave in seq order. A crash releases the claim, and the next dispatcher resends from the cursor (at-least-once). The user stream uses the same scheme with a cursor per user.
+- **Per-event authorization.** For each event and each recipient session, `Fanout` pushes only if the recipient's current membership interval contains the event's seq and the session is not in the revocation set. The payload scope follows §6.2. Both checks read an in-memory authorization cache on the single P1 node, which membership changes and session revocations update synchronously at commit, before the command is acknowledged. A removal or revocation is applied just before `COMMIT` and reverted if the commit fails; an addition is applied just after the commit. Because `member.removed` at `r` holds the conversation lock until it commits, the cache already excludes the member when `r + 1` commits. A spurious denial around a commit costs only a push, which catch-up repairs. Multi-node fan-out needs a shared mechanism (SYN-012, P2).
+- **Tickets and sockets.** Redeeming a WS ticket re-checks that the session is valid and not revoked. At the revocation commit, `Fanout` stops pushing to the session and closes its sockets.
+- **Tests:** a removed member never receives `r + 1` over push; a revoked session receives no push after the revocation commit; two dispatchers never interleave one conversation.
+
 ## 4. Catch-up and realtime
 
-- **User stream:** `GET /v1/sync?user_cursor=U&limit=N` returns user events after `U`, plus `conversation_heads` (conversation_id → last_seq) for conversations that changed. The device then pulls `GET /v1/conversations/{id}/events?after=S&limit=N` for each head whose last_seq is ahead of its local seq.
-- **WebSocket** (`rem.v1` subprotocol) is a notification path only. It pushes `{conversation_id, seq, event}` (or `{user_seq, user_event}`). The client applies an event only when `seq == local_seq + 1`. A higher seq is a **gap**: buffer it and range-fetch. A lower or equal seq is a duplicate: ignore it (I5).
-- **Reconnect:** fetch a WS ticket over HTTPS, connect, send `hello {protocol, client_version, user_cursor}`, run catch-up to the heads, then trust pushes. Backoff is exponential with full jitter, capped at *policy* (default 60 s).
-- **Retention floor:** each conversation exposes `min_retained_seq`. A request with `after < min_retained_seq - 1` returns `cursor_expired` and the client resets with a snapshot: it fetches current conversation state and the latest page of messages, drops cached events for that conversation, keeps the pending ops and re-submits them. The UI shows a notice (CLI-011).
+- **User stream:** `GET /v1/sync?user_cursor=U&limit=N` returns user events after `U`, plus `conversation_heads` (conversation_id → last_seq). Heads cover only current memberships, plus a final head capped at `left_seq` for a conversation the user just left ([contracts.md §2.2](contracts.md#22-visible-ranges-event-pages-and-redacted-stubs)). For each head ahead of its cursor, the device then pulls `GET /v1/conversations/{id}/events?after=C&limit=N` from its `covered_through` cursor `C` (§4.1).
+- **WebSocket** (`rem.v1` subprotocol) is a notification path only. It pushes `{conversation_id, seq, event}` (or `{user_seq, user_event}`). The client applies a conversation event only when its seq is the next visible seq (§4.1), and a user event only when `user_seq == local_user_seq + 1`. A higher seq is a **gap**: buffer it and range-fetch. A lower or equal seq is a duplicate: ignore it (I5).
+- **Reconnect:** fetch a WS ticket over HTTPS, connect, send `hello {protocol, client_version, device_id, user_cursor}`, run catch-up to the heads, then trust pushes. Backoff is exponential with full jitter, capped at *policy* (default 60 s).
+- **Retention floor:** each conversation exposes `min_retained_seq`. A request with `after < min_retained_seq - 1` returns `cursor_expired` and the client resets with a snapshot: it reads the conversation state and the latest message pages through the read endpoints ([contracts.md §2](contracts.md#2-http-surface-p1-v1)), drops cached events for that conversation, sets `covered_through` to the state's `last_seq`, keeps the pending ops and re-submits them. The UI shows a notice (CLI-011).
+
+### 4.1 Cursors and gap detection
+
+- The cursor per conversation is `covered_through`: every seq up to it is either applied or outside the reader's visible ranges (§6.1). An event page reports the span it covers, and the client stores its `covered_to` ([contracts.md §2.2](contracts.md#22-visible-ranges-event-pages-and-redacted-stubs)).
+- The **next visible seq** is the smallest seq above `covered_through` that lies inside a visible range. Gap detection applies only there: a jump across an invisible range is not a gap. Inside a visible range a current member receives every seq, as a full event or a redacted stub (I11), so a gap always fills.
+- The initial cursor is the start of the first visible range minus 1. On a rejoin, `user.membership_changed` gives the new `joined_seq` and `history_visibility` ([contracts.md §3](contracts.md#3-event-catalog-conversation-stream-unless-noted-all-schema_version-1)). The client refreshes `visible_ranges` from the conversation state before it resumes gap detection, so under `full` it then fetches the period it was absent.
 
 ## 5. Client outbox and pending state
 
-States: `pending → sent (ACK or own event seen) → read`, and `pending → failed(retryable|permanent|expired)`.
+States: `pending → sent (ACK or own event seen) → read`; `pending → failed(permanent | conflict | expired | stuck | dependency_failed)`, which offers retry or discard; and `pending → paused` while the queue waits for a login or an upgrade (§5.1).
 
 | Situation | Behavior |
 |---|---|
 | Send while offline | Persist (I6), show pending, queue in per-conversation FIFO. |
-| Lost ACK | On retry, the server returns `Duplicate(stored)` with the same `message_id`. Alternatively, catch-up delivers an event carrying our `operation_id`, which reconciles the pending op without a resend. |
-| 5xx, timeout, network loss | Retryable: backoff with jitter. FIFO stays blocked per conversation, so the user's order is kept. |
-| 4xx (`not_found`, `forbidden_action`, `payload_invalid`, `too_large`) | Permanent: mark failed with the reason, unblock the FIFO, offer retry or discard. |
-| 429 | Honor `retry_after`. |
-| Op older than `IDEMPOTENCY_TTL` | `expired`: never auto-retry, because dedupe is no longer guaranteed. Ask the user. |
-| Edit conflict | `revision_conflict` returns the current revision. The UI shows the conflict, and no automatic merge happens. |
-| Logout or revoked | Warn about pending ops. On a revoked session, show that the ops were not delivered. |
+| Lost ACK | On retry, the server returns `Duplicate(stored)` with the same `message_id`. Alternatively, catch-up delivers an event carrying our `operation_id`, or `GET /v1/operations/{operation_id}` returns the stored ACK ([contracts.md §2.1](contracts.md#21-idempotent-mutations-and-operation-lookup)). Either settles the pending op without a resend. |
+| Error response or transport failure | Handled by its class (§5.1). |
+| Op references a local message that is not yet ACKed | Waits for the source op (§5.2). |
+| Op too old, or failing repeatedly | `expired` or `stuck` (§5.3). |
+| Logout, revoked session or another account signs in | The ops stay with their user and device store (§5.4). The UI warns about pending ops at logout and, on a revoked session, says that they were not delivered. |
 
-**Browser specifics** (decided in ADR-0003 after PT-01): there is one device per browser profile and origin. A single writer drains the outbox across tabs (Web Locks or a SharedWorker / dedicated worker). Clearing site storage loses unsent ops and the device identity, and the next login registers a new device. That loss is disclosed in the UI and in the docs.
+### 5.1 Error classes
+
+Every code in [contracts.md §4](contracts.md#4-error-model) maps to one outbox class.
+
+| Class | Codes | Outbox behavior |
+|---|---|---|
+| Retryable | `unavailable`, network failure or timeout, `rate_limited` | Back off with full jitter; `rate_limited` waits at least `retry_after_ms`. The conversation FIFO stays blocked, so the user's order is kept, until the op succeeds or becomes stuck (§5.3). |
+| Permanent | `payload_invalid`, `too_large`, `forbidden_action`, `not_found`, `invite_invalid` | Mark `failed(permanent)` with the reason and unblock the FIFO. Dependents fail (§5.2). |
+| Reconcile | `operation_conflict` | Fetch `GET /v1/operations/{operation_id}`. If the stored kind and target are this op's, the stored ACK settles it and the server's version is shown; otherwise mark `failed(conflict)`. Never resend under a new id automatically; only a user retry mints one. |
+| Reconcile | `revision_conflict` | Show the conflict UI with the returned current revision; no automatic merge. The user's resolution is a new op. |
+| Session-terminal | `unauthenticated`, `session_revoked` | Stop the queue and require login. The ops are kept only for the same user and resume after that user logs in (§5.4). |
+| Paused | `upgrade_required` | Keep the ops and show the upgrade screen. After the upgrade they resume under their original `operation_id`; the canonical hash makes a re-encoded retry a duplicate, not a conflict (§3). |
+| Sync-reset | `cursor_expired` | Run the snapshot reset (§4), then continue the queue. |
+
+### 5.2 Dependent operations
+
+- An edit, delete, pin, reply or forward that references a local message whose send is not yet ACKed depends on that send. It waits for the source ACK, even when the source is in another conversation's queue, and keeps its own FIFO position meanwhile. When the ACK arrives, the client rewrites the reference from the local id to the server `message_id` before the dependent's first attempt.
+- An edit or delete of a message whose send has not been attempted yet is folded into the pending send locally: an edit replaces the body and a delete drops the send. After the first attempt the server may already hold the message, so a later edit or delete becomes a dependent op.
+- If the source fails permanently or is discarded, its dependents fail with reason `dependency_failed`, transitively. While the source is retryable or stuck, dependents keep waiting. A dependency always points to an earlier op, so dependencies cannot form a cycle.
+
+### 5.3 Expiry and stuck operations
+
+- **Server-time age.** The client records the offset between each response's `server_time` and its own wall clock, and persists the latest offset. An op's creation time and age are computed in server time with that offset, so a skewed device clock does not move the expiry.
+- **Expiry.** Automatic retry stops when the age reaches `IDEMPOTENCY_TTL − SAFETY_MARGIN` (*policy*, default margin 2 days). The op becomes `expired` and shows "needs confirmation". A confirmed retry reuses its `operation_id`, so it still deduplicates while the server holds the record (§7); after that it may duplicate, which the confirmation says (R-03). Test: with the client clock skewed by ±24 h (SYN-014), no op is retried automatically after its server record is gone.
+- **Stuck.** A retryable op that has failed N attempts (*policy*, default 20) or has kept failing for T since its first failure (*policy*, default 24 h) becomes `failed(stuck)`, with retry and discard. Its conversation FIFO then continues, and the UI says that the order may differ. Ops that depend on it keep waiting (§5.2).
+
+### 5.4 Store identity and browser storage
+
+- The local store is keyed by `(instance, user_id, device_id)`. `device_id` lives in the store and is sent in `hello`. An outbox is drained only under a session of the same user and device (I12). When another user signs in, the previous user's outbox stays dormant until that user returns, or is discarded after a warning, per *policy*.
+- **Browser** (decided in ADR-0003 after PT-01): there is one device per user per browser profile and origin. A single writer drains the outbox across tabs (Web Locks or a SharedWorker / dedicated worker). The client calls `navigator.storage.persist()` and reports the persistence state in diagnostics. Clearing site storage, or eviction, loses unsent ops and the device identity. If the store marker is missing while a session cookie exists, the client reports "local data was cleared; unsent messages lost", registers a new device, and the old device's session is revoked. That loss is disclosed in the UI and in the docs. PT-01 measures eviction.
 
 ## 6. Revocation and history authorization
 
-- Membership intervals: rejoining opens a new interval. `history_visibility` is `full` (a new member sees earlier history) or `from_join` (a *policy* default per group, GRP-007).
+- Membership intervals: rejoining opens a new interval. `history_visibility` is `full` or `from_join` (a *policy* default per group, GRP-007), and it turns intervals into visible ranges (§6.1).
 - A removed member keeps the history already synced to their device (reference-like). Remote purge on removal is an org-policy candidate (SEC-005, P3). The removed member's server queries return nothing past `left_seq`, and new attachment URLs are refused (MED-010).
 - Admin deactivation revokes all sessions and closes their sockets.
+
+### 6.1 Visible ranges
+
+The server computes a reader's `visible_ranges` per conversation, as half-open `[from_seq, to_seq)` ranges (wire form in [contracts.md §2.2](contracts.md#22-visible-ranges-event-pages-and-redacted-stubs)), from their membership intervals and the group's current `history_visibility`:
+
+- `full`: a current member sees the whole history from seq 1, including periods when they were absent before a rejoin.
+- `from_join`: each membership interval `[joined_seq, left_seq)` is one range.
+- A former member keeps the ranges they had at their last `left_seq`, capped there. Nothing at or after `left_seq` is visible (SYN-009).
+
+Every read path applies these ranges: event pages, history pages, conversation state, search, attachment URLs and push. A `history_visibility` change is a sequenced `conversation.updated`, after which clients refresh `visible_ranges`.
+
+### 6.2 Referenced messages and scoped events
+
+- **Referenced messages.** An event that references a message (`message.edited`, `message.deleted`, pins, reply quotes, forward attribution) is visible to a reader only when the referenced message's creation seq is visible to them, not merely the event's own seq. Otherwise an edit, delete or pin event arrives as a redacted stub, and a reply or forward keeps its own body while its reference becomes unavailable, which the UI renders as "unavailable message". A request naming an invisible message id returns `not_found`. Wire forms: [contracts.md §2.2](contracts.md#22-visible-ranges-event-pages-and-redacted-stubs).
+- **Attachments.** An attachment is downloadable when the reader can see at least one undeleted message that references it, by the rule above (MED-010.a).
+- **Scoped events.** No event carries an invite-link token. Link events carry their payload only to holders of the link right, and join-request events only to holders of the approve right. Other current members receive a redacted stub at that seq, so contiguity holds (I11). Payload contents: [contracts.md §3](contracts.md#3-event-catalog-conversation-stream-unless-noted-all-schema_version-1).
+- **Read positions.** The server clamps a read position to the reader's highest visible seq (I7).
 
 ## 7. Evolution, retention and clocks
 
 - Event payloads carry a `schema_version` per type. Additive fields keep the version, and clients ignore unknown fields. Removing or changing the meaning of a field means a new version, and the server emits both versions during the compatibility window (current + previous minor, SYN-013).
 - An unknown event type is stored as `unsupported` and shown as a placeholder. If the server says `min_client_version` is above ours, the client shows the upgrade screen.
 - The event log is pruned past `EVENT_RETENTION`. Messages persist per message retention. Storage numbers come from PT-02.
-- Server time is authoritative for display timestamps. Timeouts use monotonic clocks. A test clock lives in `rem-test-support`.
+- Idempotency records are kept for `IDEMPOTENCY_TTL + SAFETY_MARGIN`, while clients stop automatic retry at `IDEMPOTENCY_TTL − SAFETY_MARGIN` (§5.3). An error of less than twice the margin in a client's age estimate therefore never causes an automatic retry after the record is gone.
+- Server time is authoritative for display timestamps and for op age (§5.3). Timeouts use monotonic clocks. A test clock lives in `rem-test-support`.
 
 ## 8. Open questions (tracked as risks)
 
-The browser store and its worker placement (R-01), the hot-conversation write ceiling (R-02) and the idempotency TTL versus device-offline duration (R-03) are tracked in [risks.md](../plan/risks.md).
+The browser store, its worker placement and eviction (R-01), the hot-conversation write ceiling and the cost of large-group membership transactions (R-02), and the idempotency TTL versus device-offline duration, now bounded by `SAFETY_MARGIN` (R-03), are tracked in [risks.md](../plan/risks.md). Still open here, and candidates for that register:
+
+- The defaults for `SAFETY_MARGIN`, the stuck bound (N, T) and the receipt coalescing rate, to be confirmed by PT-01 and PT-02 measurements.
+- The shared authorization cache that multi-node fan-out needs (SYN-012, P2).
+- Whether another user's dormant outbox is kept or discarded by default (§5.4), a *policy* choice for the PO.

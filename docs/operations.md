@@ -8,14 +8,14 @@
 |---|---|---|---|
 | reverse proxy | pinned OCI image (product chosen at P1-14; Caddy and nginx are candidates) | certificates | TLS termination, HSTS, WS upgrade, request caps; ACME or customer certificates, works offline (OPS-011) |
 | `rem-server` | REM OCI image, digest-pinned, signed | none (stateless) | one replica in P1; runs migrations behind an explicit `migrate` subcommand, not on boot |
-| PostgreSQL | pinned major version (ADR-0004) | volume | least-privilege app role, separate migration role |
+| PostgreSQL | pinned major version (ADR-0004) | volume | least-privilege app role, separate migration role; `synchronous_commit=on` pinned for the app role (`ALTER ROLE … SET`), because the durable ACK ([sync.md I1](architecture/sync.md#1-invariants-each-becomes-a-property-or-integration-test)) depends on it |
 | object store | S3-compatible (ADR-0012), or the customer's S3 | volume or bucket | private bucket; credentials scoped to it |
 
 Packaging: a compose file valid for both `podman compose`/`podman-compose` and `docker compose`, an `.env.example` holding variable **names** only, and secret files mounted read-only. Host requirements are stated as measured minimums once OPS-009 has run, not guessed.
 
 ## 2. Configuration and secrets
 
-Configuration comes from environment variables and secret files only. The server validates it at startup and refuses to start with a missing secret, a default password or an insecure combination (for example, previews enabled without an egress allow-list). There is a rotation procedure for the session pepper, the URL-signing key and database credentials (SEC-006).
+Configuration comes from environment variables and secret files only. The server validates it at startup and refuses to start with a missing secret, a default password or an insecure combination (for example, previews enabled without an egress allow-list, or `synchronous_commit` reading anything other than `on` on the app role's connection). There is a rotation procedure for the session pepper, the URL-signing key and database credentials (SEC-006).
 
 ## 3. Backup and restore (ENT-007, OPS-003, OPS-006)
 

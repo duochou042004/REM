@@ -37,7 +37,7 @@
 
 ## ADR-0005 Conversation sequencing, outbox and durable ACK
 
-**Proposed:** design in [sync.md §3](sync.md#3-server-write-path-durable-ack): a conversation row lock, a `last_seq` counter, a single transaction for the message, event, idempotency, outbox, index and audit rows, ACK after commit, and an at-least-once dispatcher. **Rejected:** a PostgreSQL `SEQUENCE` per conversation (gaps on rollback break I3) and Redis as source of truth (not durable). **Validation (PT-02, disposable):** concurrent writers producing a contiguous seq, injected crashes before and after commit, a duplicate storm, a send racing a removal, and throughput per hot conversation and bytes per message on recorded hardware. A decision that depends on these results stays open until PT-02 evidence exists.
+**Proposed:** design in [sync.md §3](sync.md#3-server-write-path-durable-ack): a conversation row lock, a `last_seq` counter, a single transaction for the message, event, idempotency, outbox, index and audit rows, ACK after commit, and an at-least-once dispatcher. **Review additions (LD-14):** the transaction order is session → conversation lock → idempotency → right. The lock order is conversation rows then user rows, each ascending, with a bounded retry on 40P01/40001. Outbox dispatch is ordered per conversation, and the application role runs with `synchronous_commit=on`. Details are in [sync.md](sync.md). **Rejected:** a PostgreSQL `SEQUENCE` per conversation (gaps on rollback break I3) and Redis as source of truth (not durable). **Validation (PT-02, disposable):** concurrent writers producing a contiguous seq, injected crashes before and after commit, a duplicate storm, a send racing a removal, and throughput per hot conversation and bytes per message on recorded hardware. A decision that depends on these results stays open until PT-02 evidence exists.
 
 ## ADR-0006 Wire format and versioning
 
@@ -57,7 +57,7 @@
 
 ## ADR-0010 P1 authentication and sessions
 
-**Proposed:** username or email plus password with Argon2id (parameters tuned on reference hardware to a measured target), opaque random session tokens (≥256 bits, stored as a keyed hash with a server pepper), and per-device sessions. On the web, an HttpOnly, Secure, SameSite=Lax session cookie plus a CSRF token on mutations; native uses a bearer token in the OS keychain. WS ticket: single-use, 60 s. Idle timeout and absolute lifetime are *policy*. MFA, passkeys and SSO wait for P3 (ID-009). **Validation:** the P1-03 independent security review against [threat-model.md](../security/threat-model.md).
+**Proposed:** username or email plus password with Argon2id (parameters tuned on reference hardware to a measured target), opaque random session tokens (≥256 bits, stored as a keyed hash with a server pepper), and per-device sessions. On the web, an HttpOnly, Secure, SameSite=Lax session cookie plus a CSRF token on mutations; native uses a bearer token in the OS keychain. WS ticket: single-use, 60 s. Idle timeout and absolute lifetime are *policy*. MFA, passkeys and SSO wait for P3 (ID-009). Admin-initiated reset follows DEV-08 until the PO answers PO-Q9: email to the user when SMTP is configured, otherwise a single-use link under dual approval, with every session revoked, an audit record and a user notification. **Validation:** the P1-03 independent security review against [threat-model.md](../security/threat-model.md).
 
 ## ADR-0011 Ephemeral presence in P1
 

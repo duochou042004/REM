@@ -18,4 +18,6 @@
 | R-12 | The independent reviewer shares the author's model family, so blind spots are correlated | Missed security or sync flaws | Lead | A human or external security review before any P1 release or pilot (P1-15) | OPEN |
 | R-13 | The ASVS 5.0 mapping is not done | Security requirements are incomplete | Security | P0-SEC-01 mapping table | OPEN |
 | R-14 | P2–P4 capabilities are not yet researched (the registry asks for P0 research of every capability) | Later re-planning | Research | P0-RES-04 before P2 planning; not gating P1 | OPEN |
+| R-16 | Admin takeover via password reset (F2) | Customers' expectations about privacy versus admin power | PO | PO-Q9 answered; DEV-08 tests written in P1-03 | OPEN |
+| R-17 | A `rust-anything` Claude Code plugin is configured in the user environment, but its MCP server fails to start (`Executable not found in $PATH`) | Tool noise, and an unreviewed third-party tool could be enabled by accident | PO | The PO either removes the plugin or approves installing the pinned CLI after review (LD-09) | OPEN |
 | R-15 | Event log and index growth is unknown | Storage cost; retention design | Architecture | PT-02 measures bytes per message and per event; `EVENT_RETENTION` default set from it | OPEN |
