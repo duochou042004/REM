@@ -1,6 +1,6 @@
 # REM — Evidence index (commands and results)
 
-**Owner:** Lead. Each row records its tested revision, environment, exact command, result, coverage and omissions. Outputs are redacted and kept only as long as needed to reproduce. Rows are appended and never rewritten. A correction is a new row.
+**Owner:** Lead. Each row records its tested revision, environment, exact command, result, coverage and omissions. Outputs are redacted and kept only as long as needed to reproduce. Rows are appended and never rewritten. A correction is a new row. **A result holds only for its tested revision.** If an affected file has changed since that revision, the check is PENDING until a focused rerun on the new revision.
 
 Environment for all rows unless stated: Debian 13 x86_64, the local checkout at `/home/deb/App_sources/REM` (no remote), and Claude Code 2.1.329 (Opus 5.5, 1M context).
 
@@ -37,7 +37,16 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 
 ## E-07 Restart path and receiver cases
 
-*Pending: filled in after the fresh-context receiver run.*
+- **Tested revision:** checkpoint `68bea9e` (`develop` HEAD `6b12537`, a `--no-ff` merge with an empty diff to the checkpoint). **Method:** a fresh-context receiver agent, with no access to the lead's conversation, cloned the verified bundle (E-10) into a scratch directory, switched to `develop`, and followed CURRENT and bootstrap §2. 2026-11-24.
+- **Step A (new-device path), all passed:** the checkpoint resolved to `68bea9ea2c13…`; `git status --short` was empty; `python3 -I scripts/check_docs.py` printed `goal command length: 2650 chars` then `OK`, exit 0; all links and anchors in CURRENT §6 resolved; the first ready task found was P0-REV-02, with its first action and acceptance checks; GOAL.md has 2,650 characters and names P0-REV-02; the tool inventory matched bootstrap §1 except that sqlx-cli was unrecorded (now added); `printenv DISABLE_AUTO_COMPACT` printed `1`, but from a subagent only, which does **not** prove that a new top-level session picks it up (H3 stays PENDING).
+
+| Case (AGENT_HARNESS §5.2, synthetic input) | Receiver decision | Expected? | Driven by | Correction |
+|---|---|---|---|---|
+| START_PROMPT pasted again, with P0 work present | Resume P0-REV-02 from CURRENT §5 and keep E-01..E-11. No re-init, no duplicate backlog, the owner stays Lead | yes | START_PROMPT "Inputs"; AGENT_HARNESS §2.3; CLAUDE.md; evidence header | none |
+| A pass on `8fddc5a`, while `sync.md` differs on `68bea9e` (146 lines changed) | The round-1 result does not carry over. Gate items 3–7 stay PENDING. Focused verification on the new revision: the docs lane plus refuters on the sync rows (P0-REV-02) | yes | AGENT_HARNESS §2.3 and §5.1; CURRENT §1; testing-ci §1 and §3 | added the tested-revision rule to the evidence header |
+| A 1M session at 285K, with a forecast of +130K | Do not start. Split the task (for example, LD rows only) or check in and hand off; the task stays open | yes | AGENT_HARNESS §5 budget guard; CURRENT §5 | none |
+
+- **Corrections applied after the run (one commit after `6b12537`):** bootstrap §2 steps 1–2 (branch `develop`; checkpoint resolution and the empty-diff merge rule); CURRENT §1 lists the merge as an expected follow-up; the gate counts (4 PASS / 6 PENDING / 1 BLOCKED) in the gate header and CURRENT §3; sqlx-cli in bootstrap §1. These are wording fixes that agree with what the receiver did, so the receiver cases were not rerun (AGENT_HARNESS §5.2: rerun only when the relevant harness behavior changes).
 
 ## E-08 Docs check
 
@@ -103,7 +112,9 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 
 ## E-10 Device-transfer bundle
 
-*Pending.*
+- **Revision:** all refs at `develop` `6b12537`. **Commands:** `git bundle create <scratch>/rem.bundle --all`, then `git bundle verify <scratch>/rem.bundle`.
+- **Result:** "is okay", 152 KB. A fresh clone from it carried `master`, `develop` and `p0/planning-baseline` and passed the E-07 Step A checks.
+- **Limits:** the bundle lives in the session scratch directory, which is not durable. A real device transfer needs the sender to recreate it at the delivered checkpoint and send it over an approved private channel, or needs a remote (PO-Q2). The discovery PDF is not in the bundle (LD-03); its hash is in sources §1.
 
 ## E-11 Context readings
 

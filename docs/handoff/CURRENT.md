@@ -9,7 +9,7 @@
 | Repository | local `/home/deb/App_sources/REM`; **no remote** (PO-Q2); device transfer uses a git bundle ([bootstrap §2](../engineering/bootstrap.md#2-new-device-bootstrap-receiver-procedure)) |
 | Branches | `master` = seed baseline `bd3312d`; `develop` = integration (P0 work merged from `p0/planning-baseline` with `--no-ff`) |
 | Tested revision | the checkpoint below; checks recorded in [E-08](../plan/evidence.md#e-08-docs-check) and [E-07](../plan/evidence.md#e-07-restart-path-and-receiver-cases) |
-| Checkpoint | the newest `develop` commit touching this file: `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`. Later commits that touch only `docs/plan/evidence.md`, `p0-gate.md` or `backlog.md` are expected evidence follow-ups |
+| Checkpoint | the newest `develop` commit touching this file: `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`. Expected follow-ups are the `--no-ff` merge of it into `develop` (empty diff to the checkpoint) and later commits touching only `docs/plan/evidence.md`, `p0-gate.md` or `backlog.md` |
 | Working tree at handoff | clean apart from the ignored `Xây dựng nền tảng chat Rust.pdf` and `.claude/settings.local.json` |
 | Spec versions | PROJECT_SPEC v1.1, FEATURE_REGISTRY v1.1 (207 IDs), AGENT_HARNESS v1.2, START_PROMPT 2026-11-24 |
 | Rollback point | `bd3312d` (seed baseline); `8fddc5a` (planning baseline r1, before the review rework) |
@@ -22,7 +22,7 @@
 
 ## 3. Gate and decisions
 
-- **P0 gate: NOT PASSED.** 5 PASS, 5 PENDING (items 3–7 and 9), 1 BLOCKED (item 8, on PO-Q1). See [p0-gate.md](../plan/p0-gate.md).
+- **P0 gate: NOT PASSED.** 4 PASS (items 1, 2, 10, 11), 6 PENDING (items 3–7 and 9), 1 BLOCKED (item 8, on PO-Q1). See [p0-gate.md](../plan/p0-gate.md).
 - **Outstanding PO decisions:** **PO-Q1** (tool installs, blocking gate item 8), **PO-Q2** (remote and CI host, blocking CI evidence and remote handoff), **PO-Q9** (admin reset power, needed before P1-03 is accepted), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
 - Lead decisions LD-01..LD-16 are in [decisions §2](../plan/decisions.md#2-lead-decisions-reversible).
 

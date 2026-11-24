@@ -2,7 +2,7 @@
 
 **Owner:** Lead · **Revision:** r2, 2026-11-24 · **Assessed revision:** the checkpoint named in [CURRENT §1](../handoff/CURRENT.md#1-revision-state), with checks in [E-08](evidence.md#e-08-docs-check) and the review in [E-09/E-09b](evidence.md#e-09b-review-rework-and-adversarial-verification). **Criteria:** [PROJECT_SPEC §6 P0 exit review](../../PROJECT_SPEC.md#p0-exit-review) plus the harness conformance checks in §2. Statuses are only `PASS`, `PENDING` and `BLOCKED`.
 
-**Overall: NOT PASSED.** 5 PASS, 5 PENDING, 1 BLOCKED. **Implementation authorization: NOT REQUESTED / NOT GRANTED.** PO-Q8 is asked only after all 11 items pass. A planned prototype counts only as a plan, so a decision that depends on one stays open.
+**Overall: NOT PASSED.** 4 PASS, 6 PENDING, 1 BLOCKED. **Implementation authorization: NOT REQUESTED / NOT GRANTED.** PO-Q8 is asked only after all 11 items pass. A planned prototype counts only as a plan, so a decision that depends on one stays open.
 
 ## 1. Exit items
 
