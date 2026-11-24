@@ -13,15 +13,15 @@
 | Node / npm / pnpm / yarn | v24.22.3 (nvm) / 11.19.1 / present / present | web app | OK; the package manager is chosen and pinned at P1-00 |
 | Playwright + browsers | missing | T3, PT-01 | **needs PO approval** (PO-Q1); browser OS dependencies may need `sudo` (not done) |
 | Containers | podman 5.4.2; docker CLI missing | PostgreSQL and S3 for T2, OPS-001 | OK with Podman (harness: Podman OR Docker) |
-| PostgreSQL client / server | missing on host | — | run as a container in tests; image pull needs approval with PT-02 (PO-Q1) |
+| PostgreSQL client / server, sqlx-cli | missing on host | — | run as a container in tests; image pull needs approval with PT-02 (PO-Q1) |
 | python3 | 3.13.5 | `scripts/check_docs.py` | OK |
 | jq / shellcheck / pdftotext | present | tooling | OK |
 | Claude Code | 2.1.329; `DISABLE_AUTO_COMPACT` set for the project via `.claude/settings.json` (takes effect in new sessions after the folder is trusted) | harness §5 | configured; the effect is verified in the restart test ([evidence E-07](../plan/evidence.md#e-07-restart-path-and-receiver-cases)) |
 
 ## 2. New-device bootstrap (receiver procedure)
 
-1. **Get the repository.** Use `git clone <remote>` once a remote exists (PO-Q2). Until then, use the private bundle: the sender runs `git bundle create rem.bundle --all` and verifies it with `git bundle verify rem.bundle`. The bundle travels by an approved private channel, then the receiver runs `git clone rem.bundle REM && cd REM && git switch p0/planning-baseline`, or whichever branch CURRENT names.
-2. **Check the checkpoint.** `git log -1 --format=%H` must equal the checkpoint SHA in the delivery message, or the CURRENT packet's tested SHA plus its documented later commits. `git status --short` must be clean.
+1. **Get the repository.** Use `git clone <remote>` once a remote exists (PO-Q2). Until then, use the private bundle: the sender runs `git bundle create rem.bundle --all` and verifies it with `git bundle verify rem.bundle`. The bundle travels by an approved private channel, then the receiver runs `git clone rem.bundle REM && cd REM && git switch develop`.
+2. **Check the checkpoint.** Resolve it with `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`; it must equal the SHA in the delivery message. `HEAD` may be a later `--no-ff` merge or evidence-only commit: `git diff --stat <checkpoint> HEAD` must be empty or touch only the evidence follow-up files named in CURRENT §1. `git status --short` must be clean.
 3. **Check tools.** Rerun the inventory commands in [evidence E-02](../plan/evidence.md#e-02-environment-inventory) and compare against §1. Record drift in `evidence.md`. Do not install anything without approval.
 4. **Out-of-band inputs.** The discovery PDF `Xây dựng nền tảng chat Rust.pdf` (sha256 `97caf2ba…0604332`) is not in Git (PO-Q3). It is needed only for provenance questions. Verify its hash if it is supplied.
 5. **Smoke check.** Run `python3 scripts/check_docs.py` → `OK` with exit 0. Record the result.
