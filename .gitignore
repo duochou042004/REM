@@ -1,0 +1,7 @@
+# Local-only Claude Code settings (per-user)
+.claude/settings.local.json
+# Discovery PDF: provenance input kept out of Git pending PO decision PO-Q3 (see docs/plan/decisions.md)
+*.pdf
+# Future build outputs
+/target/
+node_modules/
