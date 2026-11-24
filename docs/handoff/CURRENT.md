@@ -23,7 +23,7 @@
 ## 3. Gate and decisions
 
 - **P0 gate: NOT PASSED.** 4 PASS (items 1, 2, 10, 11), 6 PENDING (items 3–7 and 9), 1 BLOCKED (item 8, on PO-Q1). See [p0-gate.md](../plan/p0-gate.md).
-- **Outstanding PO decisions:** **PO-Q1** (tool installs, blocking gate item 8), **PO-Q2** (remote and CI host, blocking CI evidence and remote handoff), **PO-Q9** (admin reset power, needed before P1-03 is accepted), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
+- **Outstanding PO decisions:** **PO-Q1** (tool installs, blocking gate item 8; the PO deferred it on 2026-11-24 and it is to be asked again at the next checkpoint), **PO-Q2** (remote and CI host, blocking CI evidence and remote handoff), **PO-Q9** (admin reset power, needed before P1-03 is accepted), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
 - Lead decisions LD-01..LD-16 are in [decisions §2](../plan/decisions.md#2-lead-decisions-reversible).
 
 ## 4. Known failures, risks and constraints
