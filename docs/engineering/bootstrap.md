@@ -13,7 +13,7 @@
 | Node / npm / pnpm / yarn | v24.22.3 (nvm) / 11.19.1 / present / present | web app | OK; the package manager is chosen and pinned at P1-00 |
 | Playwright + browsers | missing | T3, PT-01 | **needs PO approval** (PO-Q1); browser OS dependencies may need `sudo` (not done) |
 | Containers | podman 5.4.2; docker CLI missing | PostgreSQL and S3 for T2, OPS-001 | OK with Podman (harness: Podman OR Docker) |
-| PostgreSQL client / server, sqlx-cli | missing on host | — | run as a container in tests; image pull needs approval with PT-02 (PO-Q1) |
+| PostgreSQL client / server, sqlx-cli | not on the host; image `docker.io/library/postgres:19` at `sha256:aaa10f7b…a4d1` (PostgreSQL 19.0), pulled 2026-11-25 for PT-02 (PO-Q1 = A); `sqlx-cli` missing | T2, PT-02 | OK as a container ([E-17](../plan/evidence.md#e-17-p0-pt-02-postgresql-sequencing-spike)). Local storage also holds `postgres:18` and an untagged image with a stopped container from another project; REM does not use them |
 | python3 | 3.13.5 | `scripts/check_docs.py` | OK |
 | jq / shellcheck / pdftotext | present | tooling | OK |
 | Claude Code | 2.1.329; `DISABLE_AUTO_COMPACT` set for the project via `.claude/settings.json` (takes effect in new sessions after the folder is trusted) | harness §5 | configured; the effect is verified in the restart test ([evidence E-07](../plan/evidence.md#e-07-restart-path-and-receiver-cases)) |
