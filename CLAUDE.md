@@ -23,5 +23,7 @@ Start here: read [docs/handoff/CURRENT.md](docs/handoff/CURRENT.md), then only t
 ## Workflow
 
 - Branches: `master` holds stable releases (currently the seed baseline), `develop` is integration, and work happens on `p0/*`, `spike/*` or `feat/*` branches from `develop`. Merge with `--no-ff` after the packet is accepted. Never force-push `master` or `develop`.
+- Branch cleanup (LD-44): once a branch is merged into `develop` and the merge is pushed, delete it locally with `git branch -d` (which refuses unmerged work) and on `origin` with `git push origin --delete <branch>`. The `--no-ff` merge keeps its history. `spike/*` branches are never merged: keep each one while an evidence row cites its SHA, and delete it only with the PO's approval.
+- Remote: `origin` is the private GitHub repository (PO-Q2 = A). Push `develop` (and `master` at releases) after each checkpoint.
 - Before committing docs, `python3 scripts/check_docs.py` must print `OK`.
 - At each checkpoint, update `docs/plan/backlog.md`, `docs/plan/evidence.md` (tested SHA, command, result, omissions) and `docs/handoff/CURRENT.md`. Before starting a task, check `docs/plan/lessons.md` for lessons that apply.
