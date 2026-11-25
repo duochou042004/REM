@@ -1,0 +1,19 @@
+-- P0-PT-02: sync §3 steps as separate client statements (one round trip each), for throughput.
+-- :conv is passed with -D conv=<id> (hot) or drawn when -D spread=1.
+\if :spread
+\set conv random(101, 164)
+\endif
+\set sess random(1, 64)
+BEGIN;
+SELECT user_id FROM sessions WHERE id = :sess AND revoked_at IS NULL FOR SHARE \gset
+SELECT 1 FROM conversations WHERE id = :conv FOR UPDATE;
+SELECT gen_random_uuid() AS op \gset
+SELECT 1 FROM idempotency WHERE user_id = :user_id AND operation_id = :'op';
+SELECT 1 FROM members WHERE conversation_id = :conv AND user_id = :user_id AND left_seq IS NULL;
+UPDATE conversations SET last_seq = last_seq + 1 WHERE id = :conv RETURNING last_seq AS seq, gen_random_uuid() AS mid \gset
+INSERT INTO messages VALUES (:conv, :seq, :'mid', :user_id, :sess, 'Meeting moved to 15:30; please bring the release checklist and the draft notes for review.');
+INSERT INTO events VALUES (:conv, :seq, 'message.created', jsonb_build_object('message_id', :'mid'::uuid, 'sender_id', :user_id));
+INSERT INTO idempotency VALUES (:user_id, :'op', 'message.send', :conv, sha256(convert_to(:'op', 'UTF8')), jsonb_build_object('operation_id', :'op'::uuid, 'message_id', :'mid'::uuid, 'conversation_id', :conv, 'seq', :seq, 'server_time', clock_timestamp()));
+INSERT INTO outbox VALUES (:conv, :seq);
+INSERT INTO search_index VALUES (:conv, :seq, to_tsvector('simple', 'Meeting moved to 15:30; please bring the release checklist and the draft notes for review.'));
+COMMIT;
