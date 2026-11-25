@@ -46,6 +46,7 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | A pass on `8fddc5a`, while `sync.md` differs on `68bea9e` (146 lines changed) | The round-1 result does not carry over. Gate items 3–7 stay PENDING. Focused verification on the new revision: the docs lane plus refuters on the sync rows (P0-REV-02) | yes | AGENT_HARNESS §2.3 and §5.1; CURRENT §1; testing-ci §1 and §3 | added the tested-revision rule to the evidence header |
 | A 1M session at 285K, with a forecast of +130K | Do not start. Split the task (for example, LD rows only) or check in and hand off; the task stays open | yes | AGENT_HARNESS §5 budget guard; CURRENT §5 | none |
 
+- **Session P0-REV-02 start (2026-11-24 ~08:50 UTC, same device, so bootstrap §2 was not rerun):** the checkpoint resolved to `bff0320ddddc…`; `develop` HEAD `9d5f691` is its `--no-ff` merge with an empty diff (`git diff --stat bff0320 9d5f691` printed nothing). Drift found: an untracked `.gitattributes` (a `merge=graphify` rule for `graphify-out/graph.json`) and graphify post-commit hooks, both from the PO's graphify install; reconciled by LD-33 in commit `e578973`. **H3:** `printenv DISABLE_AUTO_COMPACT` printed `1` in the new top-level session's own shell (not a subagent), so `.claude/settings.json` is picked up by a new top-level session. H3 is PASS.
 - **Corrections applied after the run (one commit after `6b12537`):** bootstrap §2 steps 1–2 (branch `develop`; checkpoint resolution and the empty-diff merge rule); CURRENT §1 lists the merge as an expected follow-up; the gate counts (4 PASS / 6 PENDING / 1 BLOCKED) in the gate header and CURRENT §3; sqlx-cli in bootstrap §1. These are wording fixes that agree with what the receiver did, so the receiver cases were not rerun (AGENT_HARNESS §5.2: rerun only when the relevant harness behavior changes).
 
 ## E-08 Docs check
@@ -110,11 +111,92 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | R2-V30 | MINOR | F17 consistency verifier (resolved=false) | ID-003.d, ENT-002.b and ID-006.a in requirements.md still give admins unbounded powers to revoke sessions and deactivate accounts, which conflicts with the rank rule in threat-model §4.1. The backlog test notes for GRP-004 and ID-005 do not list tests for rank or sole-owner succession. | resolve in P0-REV-02 |
 
 
+## E-09c Final verification of P0-REV-02
+
+- **Tested revision:** `c0a7bf6` (the round-3 checkpoint) for the workflow, then the LD-40 lead fixes in the working tree on top of it for the targeted re-check. Both are committed in the P0-REV-02 closing commit on `p0/review-round-2`, which adds this row (`git log -1 --format=%H develop -- docs/plan/evidence.md`). 2026-11-25.
+- **Drift reconciled first:** the branch, the checkpoint (`c0a7bf6f43a3…`) and the clean tree matched CURRENT §1. The round-2 journal (`wf_62a7dcfb-074`, `result.final`) shows 28 rows resolved and 10 open, not 27 and 11 as CURRENT §5 said. Its list of 10 IDs was right, and those 10 were verified.
+- **Method (LD-39):** one workflow `wf_897cf319-9ab` with the budget line `agents=2 rounds=1`, which the guard passed. Agent 1 (verifier) checked the 10 open rows against their LDs and round-2 residuals, the 6 round-2 critic findings (CRIT2-1..6), the 2 lead items and LD-34..LD-38. Agent 2 (critic) read `git diff e578973 c0a7bf6 -- docs/` for new BLOCKING or MAJOR defects and re-checked the 28 verified rows against their round-2 evidence. The lead then fixed the critic's 6 MAJOR findings inline (LD-40), and one subagent re-checked only those 6. That is 3 subagents and about 477K subagent tokens; the ledger (`python3 -I scripts/orchestration_guard.py report`) shows no ask or deny for this session.
+- **Result:** all 38 round-2 rows are resolved. The verifier found every open row, round-2 critic finding, lead item and LD-34..LD-38 applied, with MINOR residuals only, and the 28 earlier rows still hold. The critic's 6 MAJOR findings (R3-K1..K6) were fixed, and their re-check found none still MAJOR. **No BLOCKING or MAJOR residual remains in the verified scope.**
+- **Commands:** `python3 -I scripts/check_docs.py` printed `goal command length: 2393 chars` then `OK`, exit 0, after the fixes and again before the commit.
+- **Omissions:** (1) the critic counted 2 further BLOCKING or MAJOR candidates (`omitted: 2`) without detail; its transcript names none, and the LD-39 stop rule runs no second critic round, so they are unknown. (2) The MINOR residuals below, and the round-2 lens MINORs of the 28 earlier rows (journal `wf_62a7dcfb-074`, `result.final[].lenses[].residual`, outside the repository), are recorded and not re-verified. (3) The R3-K5 precedence clause was added after the re-check and is not re-verified. (4) The verifiers share the authors' model family (R-12). (5) The re-check did not cover the LD-30 note in LD-40 or the LD-33 edit.
+
+| ID | Status | Home (file, section) | Verifier | Recorded MINOR residual |
+|---|---|---|---|---|
+| R2-C1 | resolved | sync.md §4 Retention floors, User-state reset; contracts §2.2 Conversation list | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-C2 | resolved | sync.md §4 Conversation reset, History pages | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-C3 | resolved | docs/architecture/contracts.md §2.1 (login row, Token commands); docs/architecture/sync.md §3.1, §3.2, §5.4 | verifier, `wf_897cf319-9ab` | — |
+| R2-C4 | resolved | docs/architecture/contracts.md §2, §2.1 (admin.user_create row, Self conversation); docs/security/threat-model.md §4; docs/architecture/sync.md §3.2 | verifier, `wf_897cf319-9ab` | — |
+| R2-C5 | resolved | sync.md §3.3 Cache updates and commit errors; T23; SYN-009.f; architecture Fanout | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-C6 | resolved | sync.md §4 User stream; contracts §2.2 GET /v1/sync; SYN-006.d; T25 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-C7 | resolved | threat-model §4.2 Break-glass; matrix; GRP-004.c; DEV-07 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-C8 | resolved | sync.md §6.1; requirements GRP-007.a; contracts §2.2/§3 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V1 | resolved | docs/architecture/sync.md §5.2, §5.3 | verifier, `wf_897cf319-9ab` | — |
+| R2-V2 | resolved | requirements ID-002.b; threat-model B5/T20; sync §5.4 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V3 | resolved | contracts.md §2.2 Event page; sync §6.1; SYN-009.b | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V4 | resolved | sync.md §4.1; requirements SYN-008.d | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V5 | resolved | requirements ENT-012.a; backlog §2 P1-03/P1-09 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V6 | resolved | docs/architecture/contracts.md §2.1 (approval.approve row); docs/security/threat-model.md §4.2 | verifier, `wf_897cf319-9ab` | The vestigial "with the actor's" clause is gone, and the two files now agree for reset approvals. The threat-model sentence is unqualified, though. An `account_deletion` approval (added by LD-35) does lock the target's sessions … |
+| R2-V7 | resolved | backlog SYN-009, MED-010; ux §2 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V8 | resolved | requirements MED-010.a/c; contracts §2.2 Referenced messages | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V9 | resolved | sync.md §3.3; threat-model T23 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V10 | resolved | threat-model T23; requirements SYN-009.f | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V11 | resolved | requirements ID-003.c; sync §5.1 Session-terminal; backlog P0-PT-02 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V12 | resolved | contracts.md §2.1 Canonical hash and table | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V13 | resolved | sync.md §3.2 Pre-session; contracts §2.1; architecture §4 IdempotencyRecord | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V14 | resolved | sync.md §5.3, §7 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V15 | resolved | architecture §3.3 Clock; risks R-03; operations §2 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V16 | resolved | docs/architecture/contracts.md §2.1 mutation table | verifier, `wf_897cf319-9ab` | — |
+| R2-V17 | resolved | backlog DM-001; architecture §4 Conversation; contracts/sync self conversation | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V18 | resolved | sync.md §3.1 Lock order; backlog P0-PT-02; adr ADR-0005 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V19 | resolved | docs/architecture/sync.md §3.1; docs/architecture/contracts.md §2.1 preamble; docs/architecture/architecture.md §4; docs/architecture/adr.md ADR-0005 | verifier, `wf_897cf319-9ab` | The home files agree: login and device_lost revocation both lock the device row before the session row, and architecture §4 and ADR-0005 now name device rows. The LD-30 record itself still lists session rows first, with no … |
+| R2-V20 | resolved | sync.md §4 User stream; requirements SYN-006.d | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V21 | resolved | threat-model T11, T24, §5; requirements GRP-002.e; operations §2 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V22 | resolved | docs/plan/backlog.md §4 SYN-007; docs/architecture/sync.md §5.2 | verifier, `wf_897cf319-9ab` | The test for the late-created dependent now exists, but it is weaker than the rule it tests. A dependent that waits up to the stuck bound would pass it, although sync requires the terminal state at once. |
+| R2-V23 | resolved | contracts §2 Login and device binding; sync §5.4; backlog ID-002/SYN-007 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V24 | resolved | contracts.md §2.2 History page; backlog SYN-008/SYN-009 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V25 | resolved | docs/security/threat-model.md §4 (links row, former-member note); docs/plan/backlog.md SYN-009 | verifier, `wf_897cf319-9ab` | The links cell and the search conflict are both fixed, and the home and the backlog agree. LD-18(d) still reads "`not_found` for the roster, links and search past `left_seq`". Its wording about search is looser than the home … |
+| R2-V26 | resolved | p0-gate item 9, H5; backlog OPS-008 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V27 | resolved | testing-ci §3, §6 C3/C4 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| R2-V28 | resolved | docs/architecture/sync.md §5.2; docs/product/ux.md §2 | verifier, `wf_897cf319-9ab` | — |
+| R2-V29 | resolved | docs/architecture/sync.md §5.3; docs/product/ux.md §2; docs/plan/backlog.md CLI-011 | verifier, `wf_897cf319-9ab` | — |
+| R2-V30 | resolved | requirements ID-003.d, ENT-002.b, ID-006.a; threat-model §4.1 | round-2 lenses `wf_62a7dcfb-074`; regression check by the critic, `wf_897cf319-9ab` | — |
+| CRIT2-1 | applied | docs/architecture/contracts.md §2.1 login row; docs/architecture/sync.md §3.1; docs/architecture/architecture.md §4 | verifier, `wf_897cf319-9ab` | — |
+| CRIT2-2 | applied | docs/architecture/sync.md §3.1 (Revoke-all); docs/architecture/contracts.md §2.1 rows password.change, password_reset.redeem, admin.user_update | verifier, `wf_897cf319-9ab` | The general rule is in place. Two gaps remain. First, the contracts `approval.approve` row for `account_deletion`, which also revokes all sessions (ID-006.b), does not restate the re-read and restart that the other revoke-all … |
+| CRIT2-3 | applied | docs/architecture/contracts.md §2.1 invite.create row; docs/security/threat-model.md §4, §4.1 | verifier, `wf_897cf319-9ab` | — |
+| CRIT2-4 | applied | docs/architecture/contracts.md §2.1 Approvals (Reset link delivery); docs/security/threat-model.md §4, §4.2 | verifier, `wf_897cf319-9ab` | All three gaps are closed: issue once, a deadline after approval, and a re-check of rank and target state at issue time. The matrix rows exist. No backlog test (ENT-012 or ID-002) pins that a second issue_link call is refused, … |
+| CRIT2-5 | applied | docs/architecture/sync.md §4 (User stream); docs/architecture/contracts.md §2.2; docs/plan/backlog.md SYN-006 | verifier, `wf_897cf319-9ab` | — |
+| CRIT2-6 | applied | docs/architecture/contracts.md §2.1 approval.approve row; docs/security/threat-model.md §4.2 | verifier, `wf_897cf319-9ab` | The fix was applied as proposed. As in R2-V6, the threat-model sentence is not scoped to a reset approval, while contracts locks the target's sessions for `account_deletion`. |
+| LEAD-C5 | applied | docs/architecture/sync.md §3.3; docs/architecture/architecture.md §3.1 (Fanout) | verifier, `wf_897cf319-9ab` | — |
+| LEAD-C7 | applied | docs/product/reference-behavior.md GRP-004 row | verifier, `wf_897cf319-9ab` | — |
+| LD-34 | applied | sync §4, §6.1; contracts §2.2; threat-model §4; backlog SYN-009 | verifier, `wf_897cf319-9ab` | — |
+| LD-35 | applied | contracts §2, §2.1; threat-model §4; requirements ENT-006.a, ENT-012.a; backlog ENT-006, ENT-012, ID-006 | verifier, `wf_897cf319-9ab` | — |
+| LD-36 | applied | sync §5.4; contracts §2, §2.1; backlog ID-002 | verifier, `wf_897cf319-9ab` | — |
+| LD-37 | applied | contracts §2.1; threat-model §4, §4.1; requirements ENT-002.b; backlog ID-001 | verifier, `wf_897cf319-9ab` | — |
+| LD-38 | applied | sync §3.3; architecture §3.1 (Fanout) | verifier, `wf_897cf319-9ab` | — |
+| R3-K1 | resolved | docs/architecture/contracts.md §2.1 (admin.user_update row) | critic `wf_897cf319-9ab` found it (docs/architecture/contracts.md §2.1 Mutation table, row PATCH /v1/admin/users/{id} …); lead fix LD-40; one targeted re-check | — |
+| R3-K2 | resolved | docs/product/requirements.md ORG-004.b | critic `wf_897cf319-9ab` found it (docs/product/requirements.md ORG-004.b vs threat-model §4 former-member note); lead fix LD-40; one targeted re-check | — |
+| R3-K3 | resolved | docs/architecture/sync.md §3.3 (Cache updates and commit errors) | critic `wf_897cf319-9ab` found it (docs/architecture/sync.md §3.3 Cache updates and commit errors); lead fix LD-40; one targeted re-check | The aborted-removal test is listed only in the sync §3.3 Tests line, not in backlog SYN-009 or the architecture §3.1 Fanout test column. |
+| R3-K4 | resolved | docs/architecture/contracts.md §2.1 (admin.user_create row) | critic `wf_897cf319-9ab` found it (docs/architecture/contracts.md §2.1 Mutation table, row POST /v1/admin/users …); lead fix LD-40; one targeted re-check | The invite.redeem row has no onboarding variant (no user-row lock, no field rule); the §2 summary of PATCH /v1/admin/users omits onboarding_token; threat-model §4 has no row or rank bound for re-issuing the token. |
+| R3-K5 | resolved | docs/architecture/contracts.md §2.2 (Former members) | critic `wf_897cf319-9ab` found it (docs/architecture/contracts.md §2.2 Former members / Redacted stub); lead fix LD-40; one targeted re-check | Precedence over the redacted stub was unstated (could expose a message_id under from_join); fixed inline by the lead with one clause, not re-verified. |
+| R3-K6 | resolved | docs/architecture/sync.md §3.1 (Lock order, login) | critic `wf_897cf319-9ab` found it (docs/architecture/sync.md §3.1 Lock order (login paragraph)); lead fix LD-40; one targeted re-check | — |
+
 ## E-10 Device-transfer bundle
 
 - **Revision:** all refs at `develop` `6b12537`. **Commands:** `git bundle create <scratch>/rem.bundle --all`, then `git bundle verify <scratch>/rem.bundle`.
 - **Result:** "is okay", 152 KB. A fresh clone from it carried `master`, `develop` and `p0/planning-baseline` and passed the E-07 Step A checks.
 - **Limits:** the bundle lives in the session scratch directory, which is not durable. A real device transfer needs the sender to recreate it at the delivered checkpoint and send it over an approved private channel, or needs a remote (PO-Q2). The discovery PDF is not in the bundle (LD-03); its hash is in sources §1.
+
+## E-12 Orchestration guard checks
+
+- **Revision:** working tree on `p0/review-round-2` after `e578973`, 2026-11-25, Claude Code 2.1.329 (its settings schema lists the `PreToolUse` and `SubagentStart` events, the `onFailure` field, `workflowSizeGuideline` and `workflowKeywordTriggerEnabled`).
+- **Checks:** `python3 -I scripts/orchestration_guard.py --self-test` printed `self-test: OK` (it covers 8 cases: no budget → deny; within budget → no decision; over budget → ask; a while-loop → ask; more call sites than declared → ask; the 6th direct Agent → ask; web-fetch exempt; the SubagentStart warning at 16). A pipe test with the stopped round-3 script (`scriptPath`) returned deny, so it cannot be resumed unchanged. `jq -e` resolved the hook command in `.claude/settings.json`. **Live check:** a probe `Workflow` call with no `agent()` calls and no budget line was blocked in this session with the guard's message, so the hook is active.
+- **Not checked:** the `Agent` hook and the `SubagentStart` hook live (that needs a spawn, which the PO paused); whether `"ultracode": false` in project settings overrides a session toggle (the schema calls ultracode session-scoped); whether workflow-internal `agent()` calls fire `SubagentStart`.
+
+## E-13 graphify repair
+
+- **Approval:** the PO, 2026-11-25, in the session's goal message. **Command:** `uv tool install 'graphifyy==0.9.118' --with 'anyio>=4.14.2'` (user-level, no `sudo`). It added anyio 4.16.0, idna 3.20 and typing-extensions 4.16.0 to graphify's own uv environment. The tool receipt now pins graphifyy 0.9.118 and requires anyio.
+- **Result:** `graphify query "lock order"`, `graphify explain sync.md`, `graphify affected docs/architecture/sync.md` and `graphify section "3.1 Lock order, user sequence and retries"` exit 0; before the repair they failed with `ModuleNotFoundError: No module named 'anyio'`. The `path.md#heading` form of `section` returns "No node matching" (exit 4); the bare heading works.
+- **Scope:** no repository file changed apart from the LD-33 record.
 
 ## E-11 Context readings
 
@@ -123,3 +205,6 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | 2026-11-24 ~05:04 | 160,147 / 1,000,000 tokens | `get_usage` (app context meter) | docs about +80K, review and restart about +30K: below 300K, continue |
 | 2026-11-24 ~05:25 | 286,175 / 1,000,000 tokens | `get_usage` | at 300K readiness. Durable state is committed (`8fddc5a`). The remaining review fixes, merge, restart test and records are forecast at about +45K, so the projection is ~335K (< 350K) and the work continues. No new large task starts in this session. |
 | 2026-11-24 ~08:05 (after a usage-limit pause) | 349,758 / 1,000,000 tokens | `get_usage` | at 350K: finish the checkpoint only (CURRENT, merge, bundle, restart test, records; forecast about +15K). P0-REV-02 is deferred to a fresh session. |
+| 2026-11-24 ~08:59 (P0-REV-02 session) | 232,809 / 1,000,000 tokens | `get_usage` | LD rows written and committed (`e578973`); the rework runs as workflow `wf_62a7dcfb-074` outside the lead context. Remaining lead work (results, records, merge) forecast at about +50K, so ~285K: continue, and hand off if the reading passes 300K before the merge |
+| 2026-11-25 ~05:00 (P0-REV-02 session, after PO-Q11) | 380,813 / 1,000,000 tokens | `get_usage` | past the 300K preparation point and near the 400K cap: no new fan-out here. Round-3 state and the LD-39 harness are committed on `p0/review-round-2`, and the verification moves to a fresh session ([GOAL](../handoff/GOAL.md)) |
+| 2026-11-25 ~05:31 (P0-REV-02 verification session) | 221,163 / 1,000,000 tokens | `get_usage` | below 300K: finish the records, the merge and the handoff here (forecast about +30K). P0-PT-03 starts in a fresh session at the packet boundary |

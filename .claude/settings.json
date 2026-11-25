@@ -1,5 +1,44 @@
 {
   "env": {
     "DISABLE_AUTO_COMPACT": "1"
+  },
+  "workflowSizeGuideline": "small",
+  "workflowKeywordTriggerEnabled": false,
+  "ultracode": false,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I \"$CLAUDE_PROJECT_DIR/scripts/orchestration_guard.py\"",
+            "timeout": 10,
+            "onFailure": "block"
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I \"$CLAUDE_PROJECT_DIR/scripts/orchestration_guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I \"$CLAUDE_PROJECT_DIR/scripts/orchestration_guard.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

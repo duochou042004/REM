@@ -35,7 +35,7 @@ The initial map is manual (below). P1-00 replaces it with a generated map: `carg
 | `apps/web/**` (UI only, no binding change) | components | — | `web-ui` (tsc, lint, component, visual and a11y for touched screens) |
 | `apps/desktop/**` | shell | — | `desktop-smoke` |
 | `Cargo.lock`, `rust-toolchain.toml`, `.cargo/**`, root `Cargo.toml`, `package-lock`/`pnpm-lock`, `.github/**`, `ci/**` (including the lane registry `ci/lanes.toml`), `scripts/**`, `CODEOWNERS` (at the root, in `.github/` or in `docs/`) | build inputs | all | **widen**: workspace-wide `rust-all` plus every platform lane that the input feeds |
-| anything unmatched, or a missing merge-base | unknown | — | **widen to all lanes** |
+| anything unmatched, or a missing merge-base | unknown | — | **widen**: `rust-all` plus every other registry lane; `rust-affected` unselected (§4) |
 
 Rules: (1) compute changed workspace members from the merge-base diff **and** from base- and head-side `cargo metadata --locked --format-version 1`, so deleted or renamed crates are caught. If either metadata call fails, widen. (2) Reverse dependencies come from `resolve.nodes` (the documented `cargo metadata` field). (3) A workflow, manifest, lane-registry, `CODEOWNERS` or embedded executable change always takes the engineering path, even if the file looks like prose or sits under `docs/`. (4) After a missed dependency is found, update the map and add a lesson ([lessons.md](../plan/lessons.md)).
 
@@ -92,8 +92,8 @@ These come from [AGENT_HARNESS §4.4](../../AGENT_HARNESS.md#rust-workspace-and-
 |---|---|---|---|---|---|
 | C1 docs PR | change `docs/plan/backlog.md` | `docs` only | pass when docs passes | none on success | PENDING (PT-03) |
 | C2 shared SDK change | change `crates/rem-client-core/src/outbox.rs` | `rust-affected` (client-core, client-native, client-wasm), `wasm-web` | fail if `wasm-web` is skipped | 3-day report only on failure | PENDING (PT-03) |
-| C3 removed crate | delete `crates/rem-client-native` (base metadata has it, head does not) | widen: `rust-all` + platform lanes | pass only if all widened lanes pass | — | PENDING (PT-03) |
-| C4 unclassified change | add `tools/new-thing/x.bin` | all lanes | as C3 | — | PENDING (PT-03) |
+| C3 removed crate | delete `crates/rem-client-native` (base metadata has it, head does not) | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (§4) | pass only if all widened lanes pass | — | PENDING (PT-03) |
+| C4 unclassified change | add `tools/new-thing/x.bin` | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (as C3) | as C3 | — | PENDING (PT-03) |
 | C5 failed selected job | C2 with `wasm-web` exiting non-zero | as C2 | **fail** | 3-day failure excerpt; expiry visible in run UI | PENDING (PT-03 for verdict; CI host for expiry) |
 | C6 CI-definition tampering | a PR edits `.github/workflows/pr.yml` so `required` always succeeds, with no code-owner approval | widen (`.github/**` is a build input), though the edited workflow may ignore the plan | may report success; the merge is still **blocked** by the missing code-owner review | — | PENDING (CI host, PO-Q2) |
 
