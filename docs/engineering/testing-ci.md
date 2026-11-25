@@ -1,6 +1,6 @@
 # REM — Test strategy, impact selection and CI design
 
-**Owner:** QA + DevOps · **Status:** Specified (P0 r1, 2026-11-24). Executable verification is PENDING on PT-03 and on a CI host (PO-Q2). **Implements:** [AGENT_HARNESS §4](../../AGENT_HARNESS.md#4-intelligent-risk-proportionate-test-selection-mandatory). Nothing here is claimed to run until [evidence.md](../plan/evidence.md) records an observed execution.
+**Owner:** QA + DevOps · **Status:** Specified (P0 r1, 2026-11-24). Cases C1–C5 are observed against a local fixture with emulated GitHub job semantics ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)). Host verification is PENDING on a CI host (PO-Q2). **Implements:** [AGENT_HARNESS §4](../../AGENT_HARNESS.md#4-intelligent-risk-proportionate-test-selection-mandatory). Nothing here is claimed to run until [evidence.md](../plan/evidence.md) records an observed execution.
 
 ## 1. Principles
 
@@ -90,11 +90,13 @@ These come from [AGENT_HARNESS §4.4](../../AGENT_HARNESS.md#rust-workspace-and-
 
 | Case | Input | Expected lanes | Expected aggregate | Expected artifact | Status |
 |---|---|---|---|---|---|
-| C1 docs PR | change `docs/plan/backlog.md` | `docs` only | pass when docs passes | none on success | PENDING (PT-03) |
-| C2 shared SDK change | change `crates/rem-client-core/src/outbox.rs` | `rust-affected` (client-core, client-native, client-wasm), `wasm-web` | fail if `wasm-web` is skipped | 3-day report only on failure | PENDING (PT-03) |
-| C3 removed crate | delete `crates/rem-client-native` (base metadata has it, head does not) | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (§4) | pass only if all widened lanes pass | — | PENDING (PT-03) |
-| C4 unclassified change | add `tools/new-thing/x.bin` | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (as C3) | as C3 | — | PENDING (PT-03) |
-| C5 failed selected job | C2 with `wasm-web` exiting non-zero | as C2 | **fail** | 3-day failure excerpt; expiry visible in run UI | PENDING (PT-03 for verdict; CI host for expiry) |
+| C1 docs PR | change `docs/plan/backlog.md` | `docs` only | pass when docs passes | none on success | observed locally ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); host semantics PENDING (PO-Q2) |
+| C2 shared SDK change | change `crates/rem-client-core/src/outbox.rs` | `rust-affected` (client-core, client-native, client-wasm), `wasm-web` | fail if `wasm-web` is skipped | 3-day report only on failure | observed locally ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); host semantics PENDING (PO-Q2) |
+| C3 removed crate | delete `crates/rem-client-native` (base metadata has it, head does not) | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (§4) | pass only if all widened lanes pass | — | observed locally ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); host semantics PENDING (PO-Q2) |
+| C4 unclassified change | add `tools/new-thing/x.bin` | widen: `rust-all` plus every other registry lane; `rust-affected` unselected (as C3) | as C3 | — | observed locally ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); host semantics PENDING (PO-Q2) |
+| C5 failed selected job | C2 with `wasm-web` exiting non-zero | as C2 | **fail** | 3-day failure excerpt; expiry visible in run UI | verdict observed locally ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); artifact and expiry PENDING (CI host, PO-Q2) |
 | C6 CI-definition tampering | a PR edits `.github/workflows/pr.yml` so `required` always succeeds, with no code-owner approval | widen (`.github/**` is a build input), though the edited workflow may ignore the plan | may report success; the merge is still **blocked** by the missing code-owner review | — | PENDING (CI host, PO-Q2) |
+
+The heading keeps its anchor. The *expected* columns stay the design contract, and the Status column records observations. "Observed locally" means that the classifier and aggregate ran against the fixture with the GitHub `if:` and `needs` semantics emulated, and that every lane apart from the two Rust lanes was a stand-in ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike) omissions 1–2).
 
 Runtime targets stay provisional until measured: queue time, cold and warm compile time, test duration and cache hit size at the first CI checkpoints.
