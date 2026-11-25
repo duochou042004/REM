@@ -180,6 +180,24 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | R3-K5 | resolved | docs/architecture/contracts.md §2.2 (Former members) | critic `wf_897cf319-9ab` found it (docs/architecture/contracts.md §2.2 Former members / Redacted stub); lead fix LD-40; one targeted re-check | Precedence over the redacted stub was unstated (could expose a message_id under from_join); fixed inline by the lead with one clause, not re-verified. |
 | R3-K6 | resolved | docs/architecture/sync.md §3.1 (Lock order, login) | critic `wf_897cf319-9ab` found it (docs/architecture/sync.md §3.1 Lock order (login paragraph)); lead fix LD-40; one targeted re-check | — |
 
+## E-09d P0-REV-02 close-out
+
+- **Why:** a correction to [E-09c](#e-09c-final-verification-of-p0-rev-02), which left three qualifications: omission 1 (2 BLOCKING or MAJOR candidates counted by the critic but never described), omission 3 (the R3-K5 clause not re-verified), and the R3-K4 MINOR (no onboarding variant of `invite.redeem`).
+- **Tested revision:** `develop` `a742d20` (content of `c70c5dd`) plus working-tree edits, committed in the close-out commit that adds this row (`git log -1 --format=%H develop -- docs/plan/evidence.md`). 2026-11-25.
+- **Method:** the round-1 critic could not be resumed (no transcript), so its candidates could not be recovered from it. The lead fixed the R3-K4 gap inline. Workflow `wf_2e95587a-bb9` declared `agents=2 rounds=2`; the LD-39 guard returned `ask`, and the run started after the prompt was approved (ledger). Agent 1 re-checked R3-K4 and R3-K5. Agent 2, a bounded critic, reviewed `git diff e578973 -- docs/` for at most 3 BLOCKING or MAJOR defects, excluding everything already known. It found 3 MAJOR (R3-K7..K9). The lead fixed them inline (LD-41), and one subagent re-checked only those 3. The session ledger shows 6 subagents, 2 direct Agent calls, 1 guard pass and 1 guard ask for workflows.
+- **Result:** every row is resolved. **No BLOCKING or MAJOR residual remains** in E-09c or here.
+- **PO answer recorded:** PO-Q1 = A (approve all), 2026-11-25, given in chat during this close-out. Gate item 8 moves from BLOCKED to PENDING.
+- **Commands:** `python3 -I scripts/check_docs.py` printed `goal command length: 2407 chars` then `OK`, exit 0, after the fixes and before the commit.
+- **Omissions:** (1) whether R3-K7..K9 are the 2 candidates E-09c counted cannot be shown; the bounded critic is one more sample, not proof of completeness. (2) The MINOR residuals below, and the two lead clauses added after the last re-check (the policy-row lock for the admin-count check, and ENT-001.a naming the owner), are recorded and not re-verified. (3) A lone remaining approver who is unavailable has no in-app exit; the operator path is not specified. (4) The verifiers share the authors' model family (R-12).
+
+| ID | Status | Home (file, section) | Verifier | Recorded MINOR residual |
+|---|---|---|---|---|
+| R3-K4 | resolved | contracts §2 and §2.1 (`admin.user_create`, `admin.user_update`, `invite.redeem`); requirements ID-001.c; threat-model T11, §4; backlog ID-001 | re-check, `wf_2e95587a-bb9` | the onboarding invite row was missing from the `admin.user_update` lock column (fixed inline); the re-issue approval is K8 |
+| R3-K5 | resolved | contracts §2.2 Former members; sync §6.1, §6.2; backlog SYN-009 | re-check, `wf_2e95587a-bb9` | — |
+| R3-K7 | resolved | contracts §2.1 `admin.user_update`; threat-model §4.1; requirements ENT-002.a; backlog ENT-012 | bounded critic `wf_2e95587a-bb9` found it (an admin grants `owner`); lead fix LD-41; one targeted re-check | — |
+| R3-K8 | resolved | contracts §2.1 (`admin.user_create`, Approvals); threat-model §4, §4.2; requirements ENT-012.a; backlog ENT-012 | bounded critic `wf_2e95587a-bb9` found it (an onboarding-token re-issue without dual approval and without SMTP); lead fix LD-41; one targeted re-check | the `reset_link` approval does not say whether it issues a reset link or an onboarding token, and `/link` does not re-check "never set a password"; harmless, because redemption refuses the token once a password exists |
+| R3-K9 | resolved | contracts §2.1 (Approvals, `policy.update`); threat-model §4.2; requirements ENT-012.a; backlog ENT-012 | bounded critic `wf_2e95587a-bb9` found it (single-admin lockout under dual approval); lead fix LD-41; one targeted re-check | a write skew between concurrent admin changes (fixed inline with the policy-row lock, not re-verified); no exit when the only other admin is unavailable |
+
 ## E-10 Device-transfer bundle
 
 - **Revision:** all refs at `develop` `6b12537`. **Commands:** `git bundle create <scratch>/rem.bundle --all`, then `git bundle verify <scratch>/rem.bundle`.
@@ -208,3 +226,4 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | 2026-11-24 ~08:59 (P0-REV-02 session) | 232,809 / 1,000,000 tokens | `get_usage` | LD rows written and committed (`e578973`); the rework runs as workflow `wf_62a7dcfb-074` outside the lead context. Remaining lead work (results, records, merge) forecast at about +50K, so ~285K: continue, and hand off if the reading passes 300K before the merge |
 | 2026-11-25 ~05:00 (P0-REV-02 session, after PO-Q11) | 380,813 / 1,000,000 tokens | `get_usage` | past the 300K preparation point and near the 400K cap: no new fan-out here. Round-3 state and the LD-39 harness are committed on `p0/review-round-2`, and the verification moves to a fresh session ([GOAL](../handoff/GOAL.md)) |
 | 2026-11-25 ~05:31 (P0-REV-02 verification session) | 221,163 / 1,000,000 tokens | `get_usage` | below 300K: finish the records, the merge and the handoff here (forecast about +30K). P0-PT-03 starts in a fresh session at the packet boundary |
+| 2026-11-25 ~05:47 (P0-REV-02 close-out, same session) | 279,558 / 1,000,000 tokens | `get_usage` | just below 300K: no new fan-out; finish the records, commit, merge and hand off (forecast about +15K) |
