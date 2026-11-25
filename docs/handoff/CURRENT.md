@@ -23,7 +23,8 @@
 ## 3. Gate and decisions
 
 - **P0 gate: NOT PASSED.** 8 PASS (items 1–6, 10, 11), 3 PENDING (item 7 on P0-SEC-01 and PO-Q9; item 8 on PT-01 and PT-02; item 9 on PT-03 and PO-Q2), 0 BLOCKED. See [p0-gate.md](../plan/p0-gate.md).
-- **Outstanding PO decisions:** **PO-Q12** (accept P0-REV-02 with its recorded deviations; recommendation A; under C, P0-PT-03 waits), **PO-Q2** (remote and CI host, blocking CI evidence and remote handoff), **PO-Q9** (admin reset power; gate item 7 and P1-09), **PO-Q10** (dormant store; before P1-06), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
+- **PO-Q12 answered 2026-11-25: accept (A).** P0-REV-02 is closed with its recorded deviations, and the P1-00 review re-reads sync, contracts and threat-model.
+- **Outstanding PO decisions:** **PO-Q2** (remote and CI host, blocking CI evidence and remote handoff), **PO-Q9** (admin reset power; gate item 7 and P1-09), **PO-Q10** (dormant store; before P1-06), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
 - **PO-Q1 answered 2026-11-25: approve all (A).** PT-01 and PT-02 install their own tools in their own sessions (user-level, no `sudo`; Playwright system libraries that need `sudo apt` are asked separately).
 - Lead decisions LD-01..LD-41 are in [decisions §2](../plan/decisions.md#2-lead-decisions-reversible).
 
