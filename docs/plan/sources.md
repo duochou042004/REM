@@ -6,11 +6,13 @@
 
 | Input | Version / date | sha256 (first 16) | In Git | Role |
 |---|---|---|---|---|
-| [START_PROMPT.md](../../START_PROMPT.md) | 2026-11-24; 3,179 characters | `833673b9a6ba9ad3` | yes (`master` bd3312d) | goal command |
-| [PROJECT_SPEC.md](../../PROJECT_SPEC.md) | v1.1 baseline, 2026-11-24 | `02a0ac8ec7812e31` | yes | product intent |
-| [FEATURE_REGISTRY.md](../../FEATURE_REGISTRY.md) | v1.1 seed; 207 IDs across 19 domains (verified, no duplicates); 84 P1 / 46 P2 / 50 P3 / 27 P4 | `932783b53f296371` | yes | stable IDs |
-| [AGENT_HARNESS.md](../../AGENT_HARNESS.md) | v1.2 | `8924a2007c2621e1` | yes | engineering harness |
+| [START_PROMPT.md](../seeds/START_PROMPT.md) | 2026-11-24; 3,179 characters | `833673b9a6ba9ad3` | yes (`master` bd3312d) | goal command |
+| [PROJECT_SPEC.md](../seeds/PROJECT_SPEC.md) | v1.1 baseline, 2026-11-24 | `02a0ac8ec7812e31` | yes | product intent |
+| [FEATURE_REGISTRY.md](../seeds/FEATURE_REGISTRY.md) | v1.1 seed; 207 IDs across 19 domains (verified, no duplicates); 84 P1 / 46 P2 / 50 P3 / 27 P4 | `932783b53f296371` | yes | stable IDs |
+| [AGENT_HARNESS.md](../seeds/AGENT_HARNESS.md) | v1.2 | `8924a2007c2621e1` | yes | engineering harness |
 | `Xây dựng nền tảng chat Rust.pdf` | 46 pages, exported 2026-11-22 (a ChatGPT discussion) | `97caf2ba30873b7f` | **no** (LD-03) | discovery history |
+
+Location: since LD-43 (2026-11-25) the four seeds and the PDF sit in `docs/seeds/`. Their content and hashes are unchanged ([E-15](evidence.md#e-15-seed-relocation)), and the PDF stays untracked.
 
 PDF page map (as read): pp. 1–11 option analysis leading to PO choice B; pp. 11–17 architecture blueprint v0.1 (workspace, sync flow, invariants); pp. 18–20 early registry v0.1 (IDs differ); pp. 20–21 security; pp. 22–24 docs tree, agent workflow, context policy; pp. 25–26 PO choice "broad parity"; pp. 26–37 blueprint v1.0 (phases, ADR list, P0 checklist); pp. 37–42 PO request for Markdown export plus QA concerns, where the PO says Claude should decide the docs structure itself (p. 42); pp. 43–46 description of the four-file package. Pages 38–41 were not read in full, because the registry notes they hold a teaching-app writing example.
 

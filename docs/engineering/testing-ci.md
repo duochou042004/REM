@@ -1,6 +1,6 @@
 # REM — Test strategy, impact selection and CI design
 
-**Owner:** QA + DevOps · **Status:** Specified (P0 r1, 2026-11-24). Cases C1–C5 are observed against a local fixture with emulated GitHub job semantics ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)). Host verification is PENDING on a CI host (PO-Q2). **Implements:** [AGENT_HARNESS §4](../../AGENT_HARNESS.md#4-intelligent-risk-proportionate-test-selection-mandatory). Nothing here is claimed to run until [evidence.md](../plan/evidence.md) records an observed execution.
+**Owner:** QA + DevOps · **Status:** Specified (P0 r1, 2026-11-24). Cases C1–C5 are observed against a local fixture with emulated GitHub job semantics ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)). Host verification is PENDING on a CI host (PO-Q2). **Implements:** [AGENT_HARNESS §4](../seeds/AGENT_HARNESS.md#4-intelligent-risk-proportionate-test-selection-mandatory). Nothing here is claimed to run until [evidence.md](../plan/evidence.md) records an observed execution.
 
 ## 1. Principles
 
@@ -86,7 +86,7 @@ J1–J8 from [requirements §2](../product/requirements.md#2-personas-and-critic
 
 ## 6. P0 acceptance cases for CI selection (synthetic walkthrough — NOT an observed execution)
 
-These come from [AGENT_HARNESS §4.4](../../AGENT_HARNESS.md#rust-workspace-and-github-actions-execution-policy). The *expected* column is the design contract. PT-03 must turn each row into an observed run against a fixture workspace (classifier plus aggregate logic), and the artifact-expiry column needs a real CI host. C6 exercises branch protection rather than the classifier ([§4.1](#41-protecting-the-ci-definitions)), so only a real CI host can observe it.
+These come from [AGENT_HARNESS §4.4](../seeds/AGENT_HARNESS.md#rust-workspace-and-github-actions-execution-policy). The *expected* column is the design contract. PT-03 must turn each row into an observed run against a fixture workspace (classifier plus aggregate logic), and the artifact-expiry column needs a real CI host. C6 exercises branch protection rather than the classifier ([§4.1](#41-protecting-the-ci-definitions)), so only a real CI host can observe it.
 
 | Case | Input | Expected lanes | Expected aggregate | Expected artifact | Status |
 |---|---|---|---|---|---|

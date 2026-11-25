@@ -1,6 +1,6 @@
 # REM — Architecture: hexagon, ports, workspace and domain model
 
-**Owner:** Architecture · **Status:** Specified (P0 r1, 2026-11-24), review recorded in [evidence.md](../plan/evidence.md) · **Binding inputs:** [PROJECT_SPEC §4](../../PROJECT_SPEC.md#4-hexagonal-architecture-ports-and-adapters) (Hexagonal Architecture and Web: React/TypeScript (WASM) are PO-confirmed). Decisions: [adr.md](adr.md). Sync semantics: [sync.md](sync.md). Wire contracts: [contracts.md](contracts.md).
+**Owner:** Architecture · **Status:** Specified (P0 r1, 2026-11-24), review recorded in [evidence.md](../plan/evidence.md) · **Binding inputs:** [PROJECT_SPEC §4](../seeds/PROJECT_SPEC.md#4-hexagonal-architecture-ports-and-adapters) (Hexagonal Architecture and Web: React/TypeScript (WASM) are PO-confirmed). Decisions: [adr.md](adr.md). Sync semantics: [sync.md](sync.md). Wire contracts: [contracts.md](contracts.md).
 
 ## 1. Shape
 
@@ -37,7 +37,7 @@ A **modular monolith** (ADR-0001): one server executable built from a Rust works
 | `apps/web` | React + TypeScript UI. It consumes only the generated binding package. | rem-client-wasm package | direct HTTP/WS calls bypassing the SDK |
 | `apps/desktop` | Tauri shell reusing `apps/web` (ADR-0007). | apps/web, rem-client-native or the WASM SDK (ADR-0007 decides) | — |
 
-**Why so few crates:** crate boundaries exist where Cargo must *enforce* direction: domain, application, adapters and root, plus client core and its two platforms. A port is a trait, not a crate ([PROJECT_SPEC §4](../../PROJECT_SPEC.md#4-hexagonal-architecture-ports-and-adapters)). Adapters split into crates only when compile time or ownership justifies it (measure first).
+**Why so few crates:** crate boundaries exist where Cargo must *enforce* direction: domain, application, adapters and root, plus client core and its two platforms. A port is a trait, not a crate ([PROJECT_SPEC §4](../seeds/PROJECT_SPEC.md#4-hexagonal-architecture-ports-and-adapters)). Adapters split into crates only when compile time or ownership justifies it (measure first).
 
 **Dependency check (P1-00 acceptance):** a CI test reads `cargo metadata --locked --format-version 1` and fails on (1) any edge from the table's "must not" column, (2) any cycle, and (3) an adapter crate depended on by a core crate. Design: [testing-ci.md §4](../engineering/testing-ci.md#4-ci-design).
 

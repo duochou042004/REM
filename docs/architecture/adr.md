@@ -73,4 +73,4 @@
 
 ## ADR-0014 CI host and selection
 
-**Proposed:** GitHub Actions, following the harness ([AGENT_HARNESS §4.4](../../AGENT_HARNESS.md#44-ci-scheduling-and-gates)), with one PR entry workflow, internal classification and an aggregate required job ([testing-ci.md §4](../engineering/testing-ci.md#4-ci-design)). **Open:** the repository has no remote. `gh` is authenticated for github.com and `glab` exists, so the hosting choice is PO-Q2. If GitLab is chosen, the same lanes map to `rules:changes` plus a final `needs`-based aggregate job, and this ADR gets a superseding version.
+**Proposed:** GitHub Actions, following the harness ([AGENT_HARNESS §4.4](../seeds/AGENT_HARNESS.md#44-ci-scheduling-and-gates)), with one PR entry workflow, internal classification and an aggregate required job ([testing-ci.md §4](../engineering/testing-ci.md#4-ci-design)). **Open:** the repository has no remote. `gh` is authenticated for github.com and `glab` exists, so the hosting choice is PO-Q2. If GitLab is chosen, the same lanes map to `rules:changes` plus a final `needs`-based aggregate job, and this ADR gets a superseding version.

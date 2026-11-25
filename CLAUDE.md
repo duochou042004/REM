@@ -1,6 +1,6 @@
 # REM — Claude Code instructions
 
-Start here: read [docs/handoff/CURRENT.md](docs/handoff/CURRENT.md), then only the sections it lists. The planning index is [docs/README.md](docs/README.md). The seeds (`PROJECT_SPEC.md`, `FEATURE_REGISTRY.md`, `AGENT_HARNESS.md`, `START_PROMPT.md`) govern and are never edited.
+Start here: read [docs/handoff/CURRENT.md](docs/handoff/CURRENT.md), then only the sections it lists. The planning index is [docs/README.md](docs/README.md). The seeds in `docs/seeds/` ([PROJECT_SPEC.md](docs/seeds/PROJECT_SPEC.md), [FEATURE_REGISTRY.md](docs/seeds/FEATURE_REGISTRY.md), [AGENT_HARNESS.md](docs/seeds/AGENT_HARNESS.md), [START_PROMPT.md](docs/seeds/START_PROMPT.md)) govern and are never edited. The discovery PDF sits beside them and stays out of Git (`*.pdf`).
 
 ## Hard guards
 

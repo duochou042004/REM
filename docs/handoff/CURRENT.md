@@ -7,24 +7,25 @@
 | Item | Value |
 |---|---|
 | Repository | local `/home/deb/App_sources/REM`; **no remote** (PO-Q2); device transfer uses a git bundle ([bootstrap §2](../engineering/bootstrap.md#2-new-device-bootstrap-receiver-procedure)) |
-| Branches | `master` = seed baseline `bd3312d`; `develop` = integration, holding the `--no-ff` merge of `p0/pt-03-results` (P0-PT-03 results, LD-42); `spike/pt-03-ci-selection` = the PT-03 throwaway spike at `6dea8c8`, **never merged** |
+| Branches | `master` = seed baseline `bd3312d`; `develop` = integration, holding the `--no-ff` merges of `p0/pt-03-results` (P0-PT-03 results, LD-42) and `p0/seed-relocation` (seeds moved to `docs/seeds/`, LD-43); `spike/pt-03-ci-selection` = the PT-03 throwaway spike at `6dea8c8`, **never merged** |
 | Tested revision | spike `6dea8c8` for the PT-03 cases ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)); the docs check runs at the checkpoint below |
 | Checkpoint | the newest commit on **`develop`** that touches this file: `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`. `develop` HEAD is its `--no-ff` merge, with an empty diff to it |
-| Working tree at handoff | clean apart from the ignored `Xây dựng nền tảng chat Rust.pdf`, `.claude/settings.local.json`, `graphify-out/` and `.claude/state/` |
-| Spec versions | PROJECT_SPEC v1.1, FEATURE_REGISTRY v1.1 (207 IDs), AGENT_HARNESS v1.2, START_PROMPT 2026-11-24 |
+| Working tree at handoff | clean apart from the ignored `docs/seeds/Xây dựng nền tảng chat Rust.pdf`, `.claude/settings.local.json`, `graphify-out/` and `.claude/state/` |
+| Spec versions | in [docs/seeds/](../seeds/PROJECT_SPEC.md) (LD-43): PROJECT_SPEC v1.1, FEATURE_REGISTRY v1.1 (207 IDs), AGENT_HARNESS v1.2, START_PROMPT 2026-11-24 |
 | Rollback point | `bd3312d` (seed baseline); `e44d928` (`develop` before P0-PT-03) |
 
 ## 2. Done in this packet
 
 - Earlier packets: P0-INIT-01, P0-RES-01, P0-REV-01 and P0-REV-02, as recorded in [backlog §1](../plan/backlog.md#1-p0-packets).
 - **P0-PT-03 DONE (local):** cases C1–C5 observed on a fixture workspace with emulated GitHub job semantics. Every run's selected lanes and its `required` verdict match [testing-ci §6](../engineering/testing-ci.md#6-p0-acceptance-cases-for-ci-selection-synthetic-walkthrough--not-an-observed-execution): C1 pass (exit 0), C2 pass (0), C2 with `wasm-web` skipped fail (1), C3 pass (0), C3 with a failing widened lane fail (1), C4 pass (0), C5 fail (1). One independent reviewer found no BLOCKING or MAJOR defect ([E-14](../plan/evidence.md#e-14-p0-pt-03-ci-selection-spike)).
+- **Seed relocation (LD-43):** the four seeds and the discovery PDF moved to `docs/seeds/`, with content and hashes unchanged ([E-15](../plan/evidence.md#e-15-seed-relocation)).
 
 ## 3. Gate and decisions
 
 - **P0 gate: NOT PASSED.** 8 PASS (items 1–6, 10, 11), 3 PENDING (item 7 on P0-SEC-01 and PO-Q9; item 8 on PT-01 and PT-02; item 9 on PO-Q2 only, now that PT-03 is DONE), 0 BLOCKED. H5 stays PENDING on a host. See [p0-gate.md](../plan/p0-gate.md).
 - **Outstanding PO decisions:** **PO-Q2** (remote and CI host; it blocks gate item 9, H5, C6, the artifact expiry and remote handoff), **PO-Q9** (admin reset power; gate item 7 and P1-09), **PO-Q10** (dormant store; before P1-06), and PO-Q3..Q7 (non-blocking). See [decisions §3](../plan/decisions.md#3-po-question-queue).
 - PO-Q1 = A and PO-Q12 = A (both 2026-11-25). PT-01 and PT-02 install their own tools in their own sessions (user-level, no `sudo`; Playwright system libraries that need `sudo apt` are asked separately).
-- Lead decisions LD-01..LD-42 are in [decisions §2](../plan/decisions.md#2-lead-decisions-reversible). LD-42 sets the packet order below.
+- Lead decisions LD-01..LD-43 are in [decisions §2](../plan/decisions.md#2-lead-decisions-reversible). LD-42 sets the packet order below.
 
 ## 4. Known failures, risks and constraints
 

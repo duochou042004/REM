@@ -2,7 +2,7 @@
 
 **Owner:** Lead (the only writer of assignments) · **Revision:** r1, 2026-11-24 · **Phase:** P0. Implementation is **not authorized** ([p0-gate.md](p0-gate.md)). The chain is FEATURE → REQUIREMENT ([requirements.md](../product/requirements.md#5-p1-acceptance-criteria)) → DESIGN (ports and contracts below) → CODE → TEST → EVIDENCE ([evidence.md](evidence.md)). CODE and TEST links are added when packets land.
 
-Packet contract ([AGENT_HARNESS §3](../../AGENT_HARNESS.md#3-task-packets-and-iterative-work)): every packet row names its IDs, owner, dependencies, scope, acceptance and verification budget. Each packet's detail is written when it becomes `READY`.
+Packet contract ([AGENT_HARNESS §3](../seeds/AGENT_HARNESS.md#3-task-packets-and-iterative-work)): every packet row names its IDs, owner, dependencies, scope, acceptance and verification budget. Each packet's detail is written when it becomes `READY`.
 
 ## 1. P0 packets
 

@@ -1,12 +1,12 @@
 # REM — Product requirements and P1 acceptance criteria
 
-**Owner:** Lead (product) · **Status:** Specified (P0 draft r1, 2026-11-24) · **Governed by:** [PROJECT_SPEC.md](../../PROJECT_SPEC.md), [FEATURE_REGISTRY.md](../../FEATURE_REGISTRY.md)
+**Owner:** Lead (product) · **Status:** Specified (P0 draft r1, 2026-11-24) · **Governed by:** [PROJECT_SPEC.md](../seeds/PROJECT_SPEC.md), [FEATURE_REGISTRY.md](../seeds/FEATURE_REGISTRY.md)
 
 This file is the single home of REM scope, non-goals, status vocabulary, enterprise deviations and **P1 acceptance criteria**. The traceability, packets and verification for each ID are in [backlog.md](../plan/backlog.md). Telegram evidence is in [reference-behavior.md](reference-behavior.md). Capability IDs come from the registry and are never reused.
 
 ## 1. Scope and non-goals
 
-**In scope (P1):** a deployable, single-tenant, self-hosted messaging foundation. It covers invite-based identity, sessions and devices, direct and group chats, the message lifecycle, durable offline sync on web (React/TypeScript + Rust WASM) and desktop, basic files, basic admin, backup/restore and operator tooling. Later phases follow [PROJECT_SPEC §6](../../PROJECT_SPEC.md#6-phase-strategy-and-explicit-gates).
+**In scope (P1):** a deployable, single-tenant, self-hosted messaging foundation. It covers invite-based identity, sessions and devices, direct and group chats, the message lifecycle, durable offline sync on web (React/TypeScript + Rust WASM) and desktop, basic files, basic admin, backup/restore and operator tooling. Later phases follow [PROJECT_SPEC §6](../seeds/PROJECT_SPEC.md#6-phase-strategy-and-explicit-gates).
 
 **Non-goals (all phases unless the PO decides otherwise):** Telegram protocol (MTProto) compatibility, Telegram accounts or cloud, server emulation, federation, and Telegram bridging. Also excluded are Telegram trademarks or assets, public social-network operation, global discovery by default, a crypto/gift economy, mandatory SaaS, always-online license checks, and any E2EE claim before ADR-0009 conditions are met.
 
@@ -14,7 +14,7 @@ This file is the single home of REM scope, non-goals, status vocabulary, enterpr
 
 ## 2. Personas and critical journeys
 
-Personas and journeys are defined once in [PROJECT_SPEC §3](../../PROJECT_SPEC.md#3-personas-core-journeys-and-release-quality). P1 journeys, with their verification owner in [testing-ci.md](../engineering/testing-ci.md#5-p1-journey-set):
+Personas and journeys are defined once in [PROJECT_SPEC §3](../seeds/PROJECT_SPEC.md#3-personas-core-journeys-and-release-quality). P1 journeys, with their verification owner in [testing-ci.md](../engineering/testing-ci.md#5-p1-journey-set):
 
 | Journey | IDs |
 |---|---|
@@ -33,7 +33,7 @@ A capability or requirement row carries one **lifecycle** value: `Discovered →
 
 1. **Reference coverage**: evidence rows in [reference-behavior.md](reference-behavior.md).
 2. **Implementation**: lifecycle reaches `Implemented`, linked to an immutable commit.
-3. **Verified correctness**: `Verified` needs a reviewed contract, passing relevant gates at a recorded SHA and acknowledged limitations ([registry release rule](../../FEATURE_REGISTRY.md#release-completeness-rule)).
+3. **Verified correctness**: `Verified` needs a reviewed contract, passing relevant gates at a recorded SHA and acknowledged limitations ([registry release rule](../seeds/FEATURE_REGISTRY.md#release-completeness-rule)).
 4. **Operational/commercial readiness**: tracked in [operations.md](../operations.md) and [commercial.md](../commercial.md).
 
 ## 4. Enterprise deviations register
