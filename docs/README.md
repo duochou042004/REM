@@ -5,7 +5,7 @@
 ## Authority order
 
 1. Current PO decisions ([decisions.md §1](plan/decisions.md#1-po-decisions-binding))
-2. The four seeds, unedited, at the repository root: [PROJECT_SPEC.md](../PROJECT_SPEC.md), [FEATURE_REGISTRY.md](../FEATURE_REGISTRY.md), [AGENT_HARNESS.md](../AGENT_HARNESS.md), [START_PROMPT.md](../START_PROMPT.md)
+2. The four seeds, unedited, in `docs/seeds/` (moved from the repository root by LD-43, content unchanged): [PROJECT_SPEC.md](seeds/PROJECT_SPEC.md), [FEATURE_REGISTRY.md](seeds/FEATURE_REGISTRY.md), [AGENT_HARNESS.md](seeds/AGENT_HARNESS.md), [START_PROMPT.md](seeds/START_PROMPT.md)
 3. This planning set. Each fact has one home, listed below, and other files link to it.
 4. The discovery PDF, for provenance only ([sources.md](plan/sources.md))
 

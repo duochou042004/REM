@@ -1,6 +1,6 @@
 # REM — Threat model and authorization matrix (P1)
 
-**Owner:** Security · **Status:** Specified (P0 r1, 2026-11-24). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Inputs:** [PROJECT_SPEC §4.2](../../PROJECT_SPEC.md#42-security-architecture), OWASP ASVS as the requirement source (version 5.0 per the PDF discovery notes; chapter mapping is pending, see §7), [sync.md](../architecture/sync.md). This document does not claim compliance or certification.
+**Owner:** Security · **Status:** Specified (P0 r1, 2026-11-24). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Inputs:** [PROJECT_SPEC §4.2](../seeds/PROJECT_SPEC.md#42-security-architecture), OWASP ASVS as the requirement source (version 5.0 per the PDF discovery notes; chapter mapping is pending, see §7), [sync.md](../architecture/sync.md). This document does not claim compliance or certification.
 
 ## 1. Assets
 

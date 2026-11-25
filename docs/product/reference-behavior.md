@@ -2,7 +2,7 @@
 
 **Owner:** Research (packet P0-RES-01, independent research agent; lead-reviewed 2026-11-24) · **Status:** Discovered · **Scope:** the 33 P1 IDs with user-visible reference behavior. Engineering-only P1 IDs (SYN except SYN-011, SEC, OPS, CLI, ENT, most UX) are REM-native designs with no Telegram reference.
 
-Evidence rules: [FEATURE_REGISTRY §How the AI agent must extend this registry](../../FEATURE_REGISTRY.md#how-the-ai-agent-must-extend-this-registry). Acceptance criteria and adopted deviations live in [requirements.md](requirements.md). A deviation candidate below is a research suggestion, not a decision. Adopted ones are DEV-01..07 in [requirements §4](requirements.md#4-enterprise-deviations-register). No row is `OBSERVED`: no running client was inspected. The next research step is [backlog P0-RES-02](../plan/backlog.md#1-p0-packets).
+Evidence rules: [FEATURE_REGISTRY §How the AI agent must extend this registry](../seeds/FEATURE_REGISTRY.md#how-the-ai-agent-must-extend-this-registry). Acceptance criteria and adopted deviations live in [requirements.md](requirements.md). A deviation candidate below is a research suggestion, not a decision. Adopted ones are DEV-01..07 in [requirements §4](requirements.md#4-enterprise-deviations-register). No row is `OBSERVED`: no running client was inspected. The next research step is [backlog P0-RES-02](../plan/backlog.md#1-p0-packets).
 
 
 Telegram is a **behavioral reference only** for REM. REM does not aim for protocol compatibility. Everything below is paraphrased. No source text over 15 words is quoted.

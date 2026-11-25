@@ -2,7 +2,7 @@
 """REM docs lane check (T0 for prose changes; see docs/engineering/testing-ci.md §3).
 
 Checks: (1) relative Markdown links and heading anchors resolve; (2) every docs/**/*.md is
-reachable from docs/README.md; (3) capability IDs cited in docs exist in FEATURE_REGISTRY.md;
+reachable from docs/README.md; (3) capability IDs cited in docs exist in docs/seeds/FEATURE_REGISTRY.md;
 (4) the P1 traceability matrix and the requirements cover exactly the registry's P1 IDs, once each;
 (5) the /goal command in docs/handoff/GOAL.md is at most 4,000 characters.
 Usage: check_docs.py [ROOT] | check_docs.py --self-test   Exit 0 = OK, 1 = findings.
@@ -34,7 +34,7 @@ def slugs(text):
 
 
 def registry_ids(root):
-    reg = (root / "FEATURE_REGISTRY.md").read_text(encoding="utf-8")
+    reg = (root / "docs" / "seeds" / "FEATURE_REGISTRY.md").read_text(encoding="utf-8")
     rows = re.findall(r"^\| `([A-Z]+-\d{3})` \|.*\| (P[0-4]) \|$", reg, re.M)
     return {i for i, _ in rows}, {i for i, p in rows if p == "P1"}
 
@@ -117,8 +117,9 @@ def self_test():
         (d / "docs/handoff").mkdir(parents=True)
         (d / "docs/plan").mkdir()
         (d / "docs/product").mkdir()
-        (d / "FEATURE_REGISTRY.md").write_text("| `SYN-001` | x | P1 |\n| `SYN-002` | y | P2 |\n")
-        (d / "docs/README.md").write_text("[s](sync.md) [b](plan/backlog.md) [r](product/requirements.md) [g](handoff/GOAL.md)\n")
+        (d / "docs/seeds").mkdir(parents=True, exist_ok=True)
+        (d / "docs/seeds/FEATURE_REGISTRY.md").write_text("| `SYN-001` | x | P1 |\n| `SYN-002` | y | P2 |\n")
+        (d / "docs/README.md").write_text("[s](sync.md) [b](plan/backlog.md) [r](product/requirements.md) [g](handoff/GOAL.md) [f](seeds/FEATURE_REGISTRY.md)\n")
         (d / "docs/sync.md").write_text(f"## 2. Rules\nSee [x]({link}) and {rid}. `ignored [a](nope.md)`\n")
         body = "".join(f"| {r} | t |\n" for r in rows)
         (d / "docs/plan/backlog.md").write_text("## 4. P1 traceability matrix\n" + body)

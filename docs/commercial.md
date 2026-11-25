@@ -1,6 +1,6 @@
 # REM — Commercial readiness
 
-**Owner:** Lead (product), with PO decisions · **Status:** Discovered (P0 r1, 2026-11-24) · **Inputs:** [PROJECT_SPEC §4.3](../PROJECT_SPEC.md#43-commercial-architecture), PDF discovery pp. 8–10 and 24. This file records hypotheses and the gates for them, not commitments.
+**Owner:** Lead (product), with PO decisions · **Status:** Discovered (P0 r1, 2026-11-24) · **Inputs:** [PROJECT_SPEC §4.3](seeds/PROJECT_SPEC.md#43-commercial-architecture), PDF discovery pp. 8–10 and 24. This file records hypotheses and the gates for them, not commitments.
 
 ## 1. Positioning hypothesis (to validate with customers)
 

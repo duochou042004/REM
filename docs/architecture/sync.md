@@ -1,6 +1,6 @@
 # REM — Messaging and synchronization contract
 
-**Owner:** Architecture (protocol) · **Status:** Specified (P0 r2, 2026-11-24, with the review resolutions of LD-14 and LD-17..LD-38 in [decisions.md](../plan/decisions.md)). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Implements:** [PROJECT_SPEC §4.1](../../PROJECT_SPEC.md#41-messaging-and-synchronization-contract); IDs SYN-001..014 and DM-002 in [requirements.md](../product/requirements.md#sync-and-realtime-syn). **Wire names** (endpoints, events, fields, error codes) are defined in [contracts.md](contracts.md); this document owns their semantics.
+**Owner:** Architecture (protocol) · **Status:** Specified (P0 r2, 2026-11-24, with the review resolutions of LD-14 and LD-17..LD-38 in [decisions.md](../plan/decisions.md)). An independent review is required before `Reviewed` ([evidence.md](../plan/evidence.md)). **Implements:** [PROJECT_SPEC §4.1](../seeds/PROJECT_SPEC.md#41-messaging-and-synchronization-contract); IDs SYN-001..014 and DM-002 in [requirements.md](../product/requirements.md#sync-and-realtime-syn). **Wire names** (endpoints, events, fields, error codes) are defined in [contracts.md](contracts.md); this document owns their semantics.
 
 ## 1. Invariants (each becomes a property or integration test)
 
