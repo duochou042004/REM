@@ -7,7 +7,7 @@
 | Item | Observed | Needed for | Status |
 |---|---|---|---|
 | OS / arch / CPU / RAM / disk free | Debian GNU/Linux 13 (trixie), x86_64, 16 threads, 22 GiB, 104 GB free | all | OK |
-| git / gh / glab | 2.47.3 / 2.105.0 (authenticated to github.com) / present | VCS, CI host | OK; no remote configured (PO-Q2) |
+| git / gh / glab | 2.47.3 / 2.105.0 (authenticated to github.com) / present | VCS, CI host | OK; remote `origin` = private `duochou042004/REM` (PO-Q2 = A) |
 | Rust | rustup, stable 1.100.0 (rustc 2026-11-09), cargo 1.100.0; installed targets: `x86_64-unknown-linux-gnu` only | server, SDK | OK for native; **missing `wasm32-unknown-unknown`** |
 | wasm-pack / wasm-bindgen-cli | missing | ADR-0002, PT-01 | **needs PO approval** (PO-Q1) |
 | Node / npm / pnpm / yarn | v24.22.3 (nvm) / 11.19.1 / present / present | web app | OK; the package manager is chosen and pinned at P1-00 |
@@ -20,7 +20,7 @@
 
 ## 2. New-device bootstrap (receiver procedure)
 
-1. **Get the repository.** Use `git clone <remote>` once a remote exists (PO-Q2). Until then, use the private bundle: the sender runs `git bundle create rem.bundle --all` and verifies it with `git bundle verify rem.bundle`. The bundle travels by an approved private channel, then the receiver runs `git clone rem.bundle REM && cd REM && git switch develop`.
+1. **Get the repository.** Run `git clone https://github.com/duochou042004/REM.git REM && cd REM && git switch develop`. This needs access to the private repository (PO-Q2 = A). Without access, use the private bundle: the sender runs `git bundle create rem.bundle --all` and verifies it with `git bundle verify rem.bundle`. The bundle travels by an approved private channel, then the receiver runs `git clone rem.bundle REM && cd REM && git switch develop`.
 2. **Check the checkpoint.** Resolve it with `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`; it must equal the SHA in the delivery message. `HEAD` may be a later `--no-ff` merge or evidence-only commit: `git diff --stat <checkpoint> HEAD` must be empty or touch only the evidence follow-up files named in CURRENT §1. `git status --short` must be clean.
 3. **Check tools.** Rerun the inventory commands in [evidence E-02](../plan/evidence.md#e-02-environment-inventory) and compare against §1. Record drift in `evidence.md`. Do not install anything without approval.
 4. **Out-of-band inputs.** The discovery PDF `Xây dựng nền tảng chat Rust.pdf` (sha256 `97caf2ba…0604332`) is not in Git (PO-Q3). Place it at `docs/seeds/` (LD-43), where `*.pdf` keeps it ignored. It is needed only for provenance questions. Verify its hash if it is supplied.

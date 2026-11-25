@@ -41,7 +41,7 @@ Rules: (1) compute changed workspace members from the merge-base diff **and** fr
 
 ## 4. CI design
 
-Host: GitHub Actions (ADR-0014; the host itself is PO-Q2). Workflows are written in P1-00, and the docs lane may activate as soon as a remote exists.
+Host: GitHub Actions on the private repository `duochou042004/REM` (ADR-0014; PO-Q2 = A). Branch protection there needs GitHub Pro (PO-Q13). Workflows are written in P1-00, and the docs lane may activate as soon as a remote exists.
 
 **PR entry, `.github/workflows/pr.yml`**: triggers are `pull_request` (and `merge_group` if a merge queue is enabled). There are **no workflow-level `paths` filters**: GitHub leaves path-filtered required checks *Pending*, which blocks merging. `concurrency: { group: pr-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}, cancel-in-progress: true }`.
 

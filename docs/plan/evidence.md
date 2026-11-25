@@ -243,6 +243,14 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 - **Commands:** `git mv START_PROMPT.md PROJECT_SPEC.md FEATURE_REGISTRY.md AGENT_HARNESS.md docs/seeds/`; `mv` for the untracked PDF; a one-off script repointed 24 relative Markdown links in 12 docs files that resolved to the old seed paths. Link text was not changed, including in earlier evidence rows. `sha256sum` before and after: the first 16 hex characters match sources §1 for all five files (`833673b9a6ba9ad3`, `02a0ac8ec7812e31`, `932783b53f296371`, `8924a2007c2621e1`, PDF `97caf2ba30873b7f`). `python3 -I scripts/check_docs.py --self-test` printed `self-test: OK`, and `python3 -I scripts/check_docs.py` printed `OK`. `git status --ignored` shows the PDF ignored at its new path.
 - **Omissions:** E-01's command names the old root paths; it holds for `master` `bd3312d`, where the seeds still sit at the root. The `spike/*` branches keep the old layout.
 
+## E-16 Private GitHub remote
+
+- **Approval:** PO-Q2 = A, given by the PO in chat on 2026-11-25 ("Yes, private repo").
+- **Pre-push checks at `develop` `c0a7f75`:** a pattern scan of `git log --all -p` for GitHub, Anthropic, OpenAI, AWS, Slack and Google key formats and for PEM private keys found 0 hits. A first scan reported 10 hits, all false positives (`sk-` inside "risk-" and "task-"). No PDF, `.env`, local settings or state file is tracked, and no blob is larger than 500 KB.
+- **Commands:** `gh repo create REM --private --source . --remote origin`; `git push -u origin master develop`; `git push origin p0/planning-baseline p0/review-round-2 p0/pt-03-results p0/seed-relocation spike/pt-03-ci-selection`; `gh repo edit duochou042004/REM --default-branch master`.
+- **Result:** `gh repo view` reports visibility `PRIVATE` and default branch `master`. `master`, `develop` and `spike/pt-03-ci-selection` match `origin`. `GET repos/duochou042004/REM/branches/master/protection` and `GET …/rulesets` both return HTTP 403: "Upgrade to GitHub Pro or make this repository public to enable this feature" (PO-Q13).
+- **Omissions:** no workflow exists yet (written in P1-00), so no Actions run, artifact or retention has been observed. The commit author email is stored in commit metadata on the private remote.
+
 ## E-11 Context readings
 
 | Time (UTC) | Reading | Source | Remaining-work estimate |
