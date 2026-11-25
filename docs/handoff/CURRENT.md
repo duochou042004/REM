@@ -7,10 +7,10 @@
 | Item | Value |
 |---|---|
 | Repository | local `/home/deb/App_sources/REM`; **no remote** (PO-Q2); device transfer uses a git bundle ([bootstrap §2](../engineering/bootstrap.md#2-new-device-bootstrap-receiver-procedure)) |
-| Branches | `master` = seed baseline `bd3312d`; `develop` = integration (P0 work merged from `p0/planning-baseline` with `--no-ff`) |
+| Branches | `master` = seed baseline `bd3312d`; `develop` = integration at `9d5f691`; **`p0/review-round-2`** = P0-REV-02 work in progress (LD-17..LD-39, rounds 1–3, the LD-39 harness), not yet merged |
 | Tested revision | the checkpoint below; checks recorded in [E-08](../plan/evidence.md#e-08-docs-check) and [E-07](../plan/evidence.md#e-07-restart-path-and-receiver-cases) |
-| Checkpoint | the newest `develop` commit touching this file: `git log -1 --format=%H develop -- docs/handoff/CURRENT.md`. Expected follow-ups are the `--no-ff` merge of it into `develop` (empty diff to the checkpoint) and later commits touching only `docs/plan/evidence.md`, `p0-gate.md` or `backlog.md` |
-| Working tree at handoff | clean apart from the ignored `Xây dựng nền tảng chat Rust.pdf` and `.claude/settings.local.json` |
+| Checkpoint | the newest **`p0/review-round-2`** commit touching this file: `git log -1 --format=%H p0/review-round-2 -- docs/handoff/CURRENT.md`. `develop` stays at `9d5f691` until P0-REV-02 passes and is merged with `--no-ff` |
+| Working tree at handoff | clean apart from the ignored `Xây dựng nền tảng chat Rust.pdf`, `.claude/settings.local.json`, `graphify-out/` and `.claude/state/` |
 | Spec versions | PROJECT_SPEC v1.1, FEATURE_REGISTRY v1.1 (207 IDs), AGENT_HARNESS v1.2, START_PROMPT 2026-11-24 |
 | Rollback point | `bd3312d` (seed baseline); `8fddc5a` (planning baseline r1, before the review rework) |
 
@@ -35,9 +35,10 @@ No failing checks. **Known open defects:** the 10 MAJOR rows and the MINOR rows 
 - **Goal:** resolve every row of the [E-09b table](../plan/evidence.md#e-09b-review-rework-and-adversarial-verification) in its home file, then verify on fresh contexts with no BLOCKING or MAJOR residual.
 - **Base:** `develop` at the checkpoint. **Branch:** `p0/review-round-2`. **Owner:** Lead as arbiter, with one writer per file (as LD-15).
 - **Write allowlist:** `docs/**`. **Excluded:** seeds, code, installs.
-- **First unfinished action:** write one binding resolution per E-09b row as new LD rows in `docs/plan/decisions.md`. Rows that need a product choice go to the PO queue instead.
-- **Acceptance:** `python3 scripts/check_docs.py` prints `OK`. A new evidence row E-09c lists each row as resolved, with file and section, judged by two refuters, and a critic reports no new BLOCKING or MAJOR defect. Gate items 3–7 are re-assessed.
-- **Verification budget:** docs only; run the rework as a workflow so the lead context stays below about 150K. **Stop:** all rows resolved, or a PO question raised for each row that remains. **Rollback:** delete the branch.
+- **State (2026-11-25):** LD-17..LD-39 are recorded. Rounds 1–2 (workflow `wf_62a7dcfb-074`) verified 27 of 38 rows. The round-3 fixes (6 writers, run `wf_49afa1cd-1e3`) are applied in the working tree, uncommitted, and unverified; that run stopped before its verifiers finished. The PO approved the LD-39 harness and the resume (**PO-Q11 = A**, 2026-11-25). The round-3 edits are committed on `p0/review-round-2`.
+- **Next action:** run **one** verification workflow within the LD-39 budget: 1 verifier for the 11 open rows (R2-C3, C4, V1, V6, V16, V19, V22, V25, V28, V29) against LD-17..LD-38, and 1 critic limited to `git diff` of the round-3 changes, looking for BLOCKING or MAJOR only (agents=2, rounds=1). The 27 verified rows keep their round-2 evidence unless the critic shows that a round-3 edit touched them.
+- **Stop rule:** no BLOCKING or MAJOR finding means E-09c is written and the branch is merged. A MAJOR finding is fixed inline by the lead, and only that row gets 1 targeted re-check; if that check still fails, the row goes to the PO queue or to a handoff. MINOR findings are recorded and not re-verified.
+- **Acceptance:** `python3 scripts/check_docs.py` prints `OK`; E-09c lists each row as resolved with file and section; gate items 3–7 are re-assessed.
 - **After it:** P0-PT-03 (CI selection spike), then P0-SEC-01. P0-PT-01 and P0-PT-02 follow PO-Q1.
 
 ## 6. Read list for the receiver (in order)
@@ -46,4 +47,4 @@ No failing checks. **Known open defects:** the 10 MAJOR rows and the MINOR rows 
 
 ## 7. Context and handoff reason
 
-Readings are in [E-11](../plan/evidence.md#e-11-context-readings). This session reached about 350K tokens (the AGENT_HARNESS §5 point to checkpoint and transfer), so it ends at the goal boundary instead of starting round 2. The next command is [GOAL.md](GOAL.md).
+The P0-REV-02 session reached 380,813 tokens ([E-11](../plan/evidence.md#e-11-context-readings)), near the AGENT_HARNESS §5 cap of 400K, so it hands off after the commit instead of starting the verification. **The checkpoint is on the work branch, not on `develop`:** the newest commit on `p0/review-round-2` that touches this file (`git log -1 --format=%H p0/review-round-2 -- docs/handoff/CURRENT.md`). The next command is [GOAL.md](GOAL.md).

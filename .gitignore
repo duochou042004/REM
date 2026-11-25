@@ -7,3 +7,5 @@
 node_modules/
 # graphify output: derived, rebuilt by its post-commit hook (LD-33)
 graphify-out/
+# Orchestration guard ledger (scripts/orchestration_guard.py, LD-39)
+.claude/state/

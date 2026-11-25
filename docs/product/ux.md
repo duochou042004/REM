@@ -22,12 +22,18 @@ Routes are deep-linkable (UX-012): `/c/{conversation_id}`, `/c/{id}/m/{message_i
 | `sent` | bubble | single check, "Sent" |
 | `read` | bubble | double check, "Read" (group: "Read by n", capped by policy) |
 | `failed` | bubble | error glyph and reason, with **Retry** and **Discard** actions; "Needs confirmation" when the operation has expired |
+| `failed(stuck)` | bubble | error glyph and "Not sent; order may differ", with **Retry** and **Discard**; later messages in the conversation keep sending ([sync.md §5.3](../architecture/sync.md#53-expiry-and-stuck-operations)) |
+| `failed(dependency_failed)` | bubble | error glyph and "Not sent: an earlier message it depends on was not sent", with **Retry** and **Discard**. While its source message is neither sending nor sent, **Retry** here fails again at once and says why; only a retry of the source re-queues this one, after the source ([sync.md §5.2](../architecture/sync.md#52-dependent-operations)). A `failed(stuck)` or expired dependent of a stuck or expired source shows the same hint on **Retry** |
+| Message unavailable | reply quote or forward source | "Message unavailable" in place of the quoted or source message, with no time or body of the source, and for a reply quote no author; a forward keeps its own body and the original author from `forwarded_from.author_id` unless policy hides it (DM-005.a, DM-005.d, SYN-009.e) |
 | Offline | global | persistent banner "Offline: messages will send when you're back online"; the composer still works |
 | Reconnecting or catching up | global | subtle progress in the header; no list flicker |
 | Snapshot reset (cursor expired) | conversation | inline notice that older history was refreshed |
+| User-state reset (user cursor expired) | global | notice that the conversation list and history were refreshed ([sync.md §4](../architecture/sync.md#4-catch-up-and-realtime)) |
 | Edit conflict | dialog | shows the server version and the user's draft; actions: keep editing over the server version, or discard |
 | Removed from group | conversation | read-only history (local), the composer replaced by "You are no longer a member" |
 | Upgrade required | blocking screen | explains the upgrade; unsent messages are preserved |
+| Logout with unsent messages | dialog | before logout, warns that n unsent messages will be deleted with this device's local data; actions: **Log out anyway** or **Cancel** (ID-002.b) |
+| Session ended (revoked or expired) | sign-in screen | the reason, and that unsent messages were not delivered yet and will be sent after you sign in again on this device (ID-003.c) |
 
 Every P1 screen defines loading (skeleton), empty, error with retry, and offline variants (UX-007).
 

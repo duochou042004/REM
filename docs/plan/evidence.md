@@ -46,6 +46,7 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | A pass on `8fddc5a`, while `sync.md` differs on `68bea9e` (146 lines changed) | The round-1 result does not carry over. Gate items 3–7 stay PENDING. Focused verification on the new revision: the docs lane plus refuters on the sync rows (P0-REV-02) | yes | AGENT_HARNESS §2.3 and §5.1; CURRENT §1; testing-ci §1 and §3 | added the tested-revision rule to the evidence header |
 | A 1M session at 285K, with a forecast of +130K | Do not start. Split the task (for example, LD rows only) or check in and hand off; the task stays open | yes | AGENT_HARNESS §5 budget guard; CURRENT §5 | none |
 
+- **Session P0-REV-02 start (2026-11-24 ~08:50 UTC, same device, so bootstrap §2 was not rerun):** the checkpoint resolved to `bff0320ddddc…`; `develop` HEAD `9d5f691` is its `--no-ff` merge with an empty diff (`git diff --stat bff0320 9d5f691` printed nothing). Drift found: an untracked `.gitattributes` (a `merge=graphify` rule for `graphify-out/graph.json`) and graphify post-commit hooks, both from the PO's graphify install; reconciled by LD-33 in commit `e578973`. **H3:** `printenv DISABLE_AUTO_COMPACT` printed `1` in the new top-level session's own shell (not a subagent), so `.claude/settings.json` is picked up by a new top-level session. H3 is PASS.
 - **Corrections applied after the run (one commit after `6b12537`):** bootstrap §2 steps 1–2 (branch `develop`; checkpoint resolution and the empty-diff merge rule); CURRENT §1 lists the merge as an expected follow-up; the gate counts (4 PASS / 6 PENDING / 1 BLOCKED) in the gate header and CURRENT §3; sqlx-cli in bootstrap §1. These are wording fixes that agree with what the receiver did, so the receiver cases were not rerun (AGENT_HARNESS §5.2: rerun only when the relevant harness behavior changes).
 
 ## E-08 Docs check
@@ -116,6 +117,12 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 - **Result:** "is okay", 152 KB. A fresh clone from it carried `master`, `develop` and `p0/planning-baseline` and passed the E-07 Step A checks.
 - **Limits:** the bundle lives in the session scratch directory, which is not durable. A real device transfer needs the sender to recreate it at the delivered checkpoint and send it over an approved private channel, or needs a remote (PO-Q2). The discovery PDF is not in the bundle (LD-03); its hash is in sources §1.
 
+## E-12 Orchestration guard checks
+
+- **Revision:** working tree on `p0/review-round-2` after `e578973`, 2026-11-25, Claude Code 2.1.329 (its settings schema lists the `PreToolUse` and `SubagentStart` events, the `onFailure` field, `workflowSizeGuideline` and `workflowKeywordTriggerEnabled`).
+- **Checks:** `python3 -I scripts/orchestration_guard.py --self-test` printed `self-test: OK` (it covers 8 cases: no budget → deny; within budget → no decision; over budget → ask; a while-loop → ask; more call sites than declared → ask; the 6th direct Agent → ask; web-fetch exempt; the SubagentStart warning at 16). A pipe test with the stopped round-3 script (`scriptPath`) returned deny, so it cannot be resumed unchanged. `jq -e` resolved the hook command in `.claude/settings.json`. **Live check:** a probe `Workflow` call with no `agent()` calls and no budget line was blocked in this session with the guard's message, so the hook is active.
+- **Not checked:** the `Agent` hook and the `SubagentStart` hook live (that needs a spawn, which the PO paused); whether `"ultracode": false` in project settings overrides a session toggle (the schema calls ultracode session-scoped); whether workflow-internal `agent()` calls fire `SubagentStart`.
+
 ## E-11 Context readings
 
 | Time (UTC) | Reading | Source | Remaining-work estimate |
@@ -123,3 +130,5 @@ Environment for all rows unless stated: Debian 13 x86_64, the local checkout at 
 | 2026-11-24 ~05:04 | 160,147 / 1,000,000 tokens | `get_usage` (app context meter) | docs about +80K, review and restart about +30K: below 300K, continue |
 | 2026-11-24 ~05:25 | 286,175 / 1,000,000 tokens | `get_usage` | at 300K readiness. Durable state is committed (`8fddc5a`). The remaining review fixes, merge, restart test and records are forecast at about +45K, so the projection is ~335K (< 350K) and the work continues. No new large task starts in this session. |
 | 2026-11-24 ~08:05 (after a usage-limit pause) | 349,758 / 1,000,000 tokens | `get_usage` | at 350K: finish the checkpoint only (CURRENT, merge, bundle, restart test, records; forecast about +15K). P0-REV-02 is deferred to a fresh session. |
+| 2026-11-24 ~08:59 (P0-REV-02 session) | 232,809 / 1,000,000 tokens | `get_usage` | LD rows written and committed (`e578973`); the rework runs as workflow `wf_62a7dcfb-074` outside the lead context. Remaining lead work (results, records, merge) forecast at about +50K, so ~285K: continue, and hand off if the reading passes 300K before the merge |
+| 2026-11-25 ~05:00 (P0-REV-02 session, after PO-Q11) | 380,813 / 1,000,000 tokens | `get_usage` | past the 300K preparation point and near the 400K cap: no new fan-out here. Round-3 state and the LD-39 harness are committed on `p0/review-round-2`, and the verification moves to a fresh session ([GOAL](../handoff/GOAL.md)) |

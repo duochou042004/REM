@@ -15,7 +15,15 @@ Packaging: a compose file valid for both `podman compose`/`podman-compose` and `
 
 ## 2. Configuration and secrets
 
-Configuration comes from environment variables and secret files only. The server validates it at startup and refuses to start with a missing secret, a default password or an insecure combination (for example, previews enabled without an egress allow-list, or `synchronous_commit` reading anything other than `on` on the app role's connection). There is a rotation procedure for the session pepper, the URL-signing key and database credentials (SEC-006).
+Configuration comes from environment variables and secret files only. The server validates it at startup and refuses to start with a missing secret, a default password or an insecure combination (for example, previews enabled without an egress allow-list, SMTP set with TLS off, or `synchronous_commit` reading anything other than `on` on the app role's connection). There is a rotation procedure for the token pepper, the link-token key, the URL-signing key and database credentials (SEC-006).
+
+| Setting | Kind | Rule |
+|---|---|---|
+| SMTP: host, port, required TLS, credentials, sender | optional; credentials are a secret file | Used for password-reset links and self-service recovery ([requirements ID-002](product/requirements.md#identity-id)). Unset means no email delivery, and reset delivery then follows [threat-model §4.2](security/threat-model.md#42-admin-recovery-powers-po-q9). The server refuses to start when SMTP is set and TLS is off. |
+| Link-token key | secret file, separate from the token pepper | Encrypts the stored copy of each invite-link token for the authorized re-read (GRP-002.e); lookup uses the keyed hash. Rotation re-encrypts the stored copies. Org invite tokens and all other tokens are hash-only ([threat-model §5](security/threat-model.md#5-data-classification-and-logging)). |
+| `IDEMPOTENCY_TTL`, `SAFETY_MARGIN` | *policy*, defaults 30 days and 2 days (SYN-002.b) | Clients stop automatic retry at an op age of `IDEMPOTENCY_TTL − SAFETY_MARGIN`; the server keeps each record `IDEMPOTENCY_TTL + SAFETY_MARGIN` ([sync.md §7](architecture/sync.md#7-evolution-retention-and-clocks)). |
+| `EVENT_RETENTION` | *policy*, default set from PT-02 (R-15) | Age past which conversation events and user events are pruned. |
+| Pruning job | scheduled worker in `rem-server` | Deletes each idempotency record `IDEMPOTENCY_TTL + SAFETY_MARGIN` after its commit time on the server clock. Deletes events older than `EVENT_RETENTION` and, in the same transaction, raises `min_retained_seq` per conversation and `min_retained_user_seq` per user to the lowest seq still retained, or to `last_seq + 1` (`last_user_seq + 1`) when none is retained, so a cursor below a floor gets `cursor_expired` ([sync.md §4](architecture/sync.md#4-catch-up-and-realtime)). Its transactions follow the global lock order ([sync.md §3.1](architecture/sync.md#31-lock-order-user-sequence-and-retries)). |
 
 ## 3. Backup and restore (ENT-007, OPS-003, OPS-006)
 
