@@ -26,6 +26,6 @@ wasted_cost: "Estimated at more than half of the subagent tokens: the round-2 re
 prevention: "LD-39: a declared budget per workflow, enforced by a hook; one verifier per concern; MINOR findings recorded but not re-verified; stop once the acceptance criteria hold; re-verify only what a fix touched."
 verification: "The next fan-out declares its budget, stays within 5 agents and 1 round, and the ledger (`python3 scripts/orchestration_guard.py report`) shows no ask or deny that the PO had to override."
 owner: "Lead"
-status: proposed
+status: verified  # 2026-11-25, E-09c: 1 workflow (agents=2 rounds=1) plus 1 targeted re-check, no ask or deny in the ledger
 review_date: "2026-12-25"
 ```
