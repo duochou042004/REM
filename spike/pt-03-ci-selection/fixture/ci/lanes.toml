@@ -1,0 +1,100 @@
+# Fixture lane registry (testing-ci §4): the only source of valid plan keys.
+# stub = true: the command is a stand-in; its pass says nothing about the lane's real content.
+
+[lanes.docs]
+job = "docs"
+stub = true
+run = "test -s docs/plan/backlog.md"
+
+[lanes.rust-affected]
+job = "rust-affected"
+run = "cargo fmt --all -- --check && cargo clippy {packages} --all-targets --locked --offline -- -D warnings && cargo test {packages} --locked --offline -q"
+
+[lanes.rust-all]
+job = "rust-all"
+run = "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked --offline -- -D warnings && cargo test --workspace --locked --offline -q"
+
+[lanes.wasm-web]
+job = "wasm-web"
+stub = true
+run = "true"
+
+[lanes.web-ui]
+job = "web-ui"
+stub = true
+run = "true"
+
+[lanes.db-integration]
+job = "db-integration"
+stub = true
+run = "true"
+
+[lanes.migration]
+job = "migration"
+stub = true
+run = "true"
+
+[lanes.compat]
+job = "compat"
+stub = true
+run = "true"
+
+[lanes.security-neg]
+job = "security-neg"
+stub = true
+run = "true"
+
+[lanes.desktop-smoke]
+job = "desktop-smoke"
+stub = true
+run = "true"
+
+# Path -> lane rows of testing-ci §3. fnmatch patterns: "*" also matches "/".
+# Build-input rows widen and win over every other row (§3 rule 3).
+[[rows]]
+widen = true
+paths = ["Cargo.lock", "rust-toolchain.toml", ".cargo/*", "Cargo.toml", "package-lock.json", "pnpm-lock.yaml", ".github/*", "ci/*", "scripts/*", "CODEOWNERS", "docs/CODEOWNERS"]
+
+[[rows]]
+paths = ["docs/*", "*.md"]
+lanes = ["docs"]
+
+[[rows]]
+paths = ["crates/rem-domain/*"]
+lanes = ["rust-affected", "db-integration"]
+
+[[rows]]
+paths = ["crates/rem-protocol/*"]
+lanes = ["rust-affected", "compat", "wasm-web", "db-integration"]
+
+[[rows]]
+paths = ["crates/rem-server-app/src/auth/*"]
+lanes = ["rust-affected", "db-integration", "security-neg"]
+
+[[rows]]
+paths = ["crates/rem-server-app/*", "crates/rem-server-adapters/*", "crates/rem-server/*"]
+lanes = ["rust-affected", "db-integration"]
+
+[[rows]]
+paths = ["migrations/*"]
+lanes = ["db-integration", "migration"]
+
+[[rows]]
+paths = ["crates/rem-client-core/*"]
+lanes = ["rust-affected", "wasm-web"]
+
+[[rows]]
+paths = ["crates/rem-client-native/*"]
+lanes = ["rust-affected"]
+
+[[rows]]
+paths = ["crates/rem-client-wasm/*"]
+lanes = ["rust-affected", "wasm-web"]
+
+[[rows]]
+paths = ["apps/web/*"]
+lanes = ["web-ui"]
+
+[[rows]]
+paths = ["apps/desktop/*"]
+lanes = ["desktop-smoke"]

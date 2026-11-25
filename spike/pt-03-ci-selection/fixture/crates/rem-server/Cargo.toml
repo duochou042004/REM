@@ -1,0 +1,9 @@
+[package]
+name = "rem-server"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+rem-server-app = { path = "../rem-server-app" }
+rem-server-adapters = { path = "../rem-server-adapters" }
