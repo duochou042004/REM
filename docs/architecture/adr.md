@@ -17,7 +17,7 @@
 | [0011](#adr-0011-ephemeral-presence-in-p1) | In-process presence in P1 (Redis deferred) | Proposed | PT-02 load note; SYN-012 |
 | [0012](#adr-0012-media-storage-and-delivery) | Media storage and delivery | Proposed; store product Open | P1-11; license review |
 | [0013](#adr-0013-p1-search) | P1 search on PostgreSQL FTS | Proposed | P1-12 |
-| [0014](#adr-0014-ci-host-and-selection) | CI host and selection model | Proposed; host Open (PO-Q2) | PT-03 |
+| [0014](#adr-0014-ci-host-and-selection) | CI host and selection model | Proposed; host GitHub, private repository (PO-Q2 = A); branch protection PO-Q13 | PT-03 |
 
 ## ADR-0001 Hexagonal modular monolith
 
