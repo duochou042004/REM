@@ -131,7 +131,7 @@ S5() {  # sends racing a member removal (conv 4, user 20 removed by admin sessio
   sleep 1.5
   r=$(q -c "select (remove_member(1, 4, 20))->>'seq'")
   sleep 1.5
-  podman exec $C pkill -f worker.sh; wait
+  touch "$WORK/stop"; wait; rm -f "$WORK/stop"
   echo "member.removed seq r=$r"
   q -c "select 'user20 msgs=' || count(*) || ' max_seq=' || max(seq) || ' after_r=' || count(*) filter (where seq > $r) from messages where conversation_id = 4 and sender_id = 20"
   q -c "select 'user21 msgs after r=' || count(*) from messages where conversation_id = 4 and sender_id = 21 and seq > $r"
@@ -149,7 +149,7 @@ S6() {  # sends and a duplicate racing a session revocation (conv 5, admin sessi
   sleep 0.5; t0=$(date +%s.%N)
   q -c "select revoke_session(1, 30)" >/dev/null; t1=$(date +%s.%N); wait
   echo "(a) in-flight send: $(cat "$WORK/s6a.out" | cut -c1-60)...; revocation waited $(python3 -c "print(round($t1-$t0,2))") s"
-  q -c "select '    send committed before revocation: ' || (select pg_xact_commit_timestamp(m.xmin) < pg_xact_commit_timestamp(s.xmin) from messages m, sessions s where m.session_id = 30 and s.id = 30)"
+  q -c "select '    send committed before revocation: ' || (select pg_xact_commit_timestamp(m.xmin) < pg_xact_commit_timestamp(s.xmin) from messages m, sessions s where m.conversation_id = 5 and m.session_id = 30 and s.id = 30)"
   podman exec $C psql -XAtq -U postgres -d rem -c "select revoke_session(1, 31); select pg_sleep(2);" >/dev/null &
   sleep 0.5; t0=$(date +%s.%N)
   r=$(q -c "select send_message(31, 5, '$(uuid)', 'rev')"); t1=$(date +%s.%N); wait
@@ -158,8 +158,8 @@ S6() {  # sends and a duplicate racing a session revocation (conv 5, admin sessi
   rm -f "$WORK"/ack_s6_*.log
   for k in a b c d; do podman exec $C bash /spike/worker.sh 32 5 /work/ack_s6_$k.log rev >/dev/null 2>&1 & done
   sleep 1.5; q -c "select revoke_session(1, 32)" >/dev/null; sleep 1
-  podman exec $C pkill -f worker.sh; wait
-  q -c "select '(d) session 32 msgs=' || count(*) || ' committed_after_revocation=' || count(*) filter (where pg_xact_commit_timestamp(m.xmin) > (select pg_xact_commit_timestamp(xmin) from sessions where id = 32)) from messages m where session_id = 32"
+  touch "$WORK/stop"; wait; rm -f "$WORK/stop"
+  q -c "select '(d) session 32 msgs=' || count(*) || ' committed_after_revocation=' || count(*) filter (where pg_xact_commit_timestamp(m.xmin) > (select pg_xact_commit_timestamp(xmin) from sessions where id = 32)) from messages m where conversation_id = 5 and session_id = 32"
   cat "$WORK"/ack_s6_*.log | python3 -I -c "
 import json, sys, collections
 print('    worker results', dict(collections.Counter(json.loads(l.split(' ',1)[1])['status'] for l in sys.stdin if ' ' in l)))"
@@ -200,4 +200,9 @@ invariants() {  # every conversation: events seq = 1..last_seq, no holes or dupl
         from users u join (select user_id, count(*) n, max(user_seq) hi from user_events group by 1) e on e.user_id = u.id"
 }
 
+resets() {  # postmaster crash-resets since the container started: expected 1 (the S3 SIGKILL) and 0 reinitializations
+  echo "unclean starts=$(podman logs $C 2>&1 | grep -c 'not properly shut down') reinitializations=$(podman logs $C 2>&1 | grep -c 'all server processes terminated; reinitializing')"
+}
+
+rm -f "$WORK/stop" 2>/dev/null
 "$@"
